@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+
+  --color-rosa-forte: #D4537E;
+  --color-rosa-medio: #F4C0D1;
+  --color-rosa-claro: #FBEAF0;
+  --color-texto-escuro: #4B1528;
+  --color-texto-medio: #72243E;
+  --color-texto-claro: rgba(75, 21, 40, 0.5);
+  --color-ativo-bg: rgba(75, 21, 40, 0.15);
+  --color-hover-bg: rgba(75, 21, 40, 0.08);
+  --color-card-bg: rgba(255, 255, 255, 0.65);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 339 46% 19%;
+    --card: 0 0% 100%;
+    --card-foreground: 339 46% 19%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 339 46% 19%;
+    --primary: 340 61% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 340 60% 86%;
+    --secondary-foreground: 339 46% 19%;
+    --muted: 339 60% 92%;
+    --muted-foreground: 339 46% 40%;
+    --accent: 339 60% 92%;
+    --accent-foreground: 339 46% 19%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 339 20% 85%;
+    --input: 339 20% 85%;
+    --ring: 340 61% 58%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    background: linear-gradient(to right, #D4537E 0%, #F4C0D1 25%, #FBEAF0 100%);
+    min-height: 100vh;
+    color: var(--color-texto-escuro);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
