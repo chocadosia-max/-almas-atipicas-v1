@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Send, Heart, Volume2, MessageCircle,
   Users, Anchor, Clock, Sparkles, Plus, PlayCircle, LogIn, 
-  Activity, Leaf, Mic, StopCircle
+  Activity, Leaf, Mic, StopCircle, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { toast } from "sonner";
@@ -48,20 +48,27 @@ const FloatingBubble = ({ participant, index, total, isSelected, isReceivingHear
     );
 };
 
-const MuralCard = ({ card, onPlay }: any) => {
+const MuralCard = ({ card, onPlay, onDelete, isMine }: any) => {
     const rotation = useMemo(() => Math.random() * 4 - 2, []);
     return (
         <motion.div initial={{ scale: 0.9, opacity: 0, rotate: rotation }} animate={{ scale: 1, opacity: 1, rotate: rotation }} whileHover={{ scale: 1.02, rotate: 0, zIndex: 10 }} className="group relative bg-white/90 backdrop-blur-sm p-6 shadow-2xl rounded-[2.5rem] border border-white flex flex-col gap-5 overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-pink-500/10 rounded-full mt-4" />
-            <div className="flex items-center gap-4">
-               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center text-3xl shadow-inner border border-white">👩</div>
-               <div className="flex flex-col">
-                  <span className="text-sm font-black text-gray-800 uppercase tracking-tight">Mãe {card.author}</span>
-                  <div className="flex items-center gap-1.5 mt-1">
-                     <Clock size={12} className="text-pink-300" />
-                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{card.time}</span>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center text-3xl shadow-inner border border-white">👩</div>
+                  <div className="flex flex-col">
+                      <span className="text-sm font-black text-gray-800 uppercase tracking-tight">Mãe {card.author}</span>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Clock size={12} className="text-pink-300" />
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{card.time}</span>
+                      </div>
                   </div>
-               </div>
+                </div>
+                {isMine && (
+                   <button onClick={() => onDelete(card.id)} className="p-3 text-gray-300 hover:text-red-500 bg-gray-50 rounded-2xl transition-all hover:bg-red-50 group/del shadow-sm">
+                      <Trash2 size={18} />
+                   </button>
+                )}
             </div>
             
             <div className="w-full bg-pink-100/50 p-6 rounded-[2rem] border border-white/50 relative group/btn cursor-pointer overflow-hidden transition-all hover:bg-pink-100" onClick={() => onPlay(card.audioData)}>
@@ -213,6 +220,15 @@ const RadioDasMaes = () => {
         }
     };
 
+    const handleDeleteCard = (cardId: number) => {
+        setDesabafos(prev => {
+            const updated = prev.filter(c => c.id !== cardId);
+            localStorage.setItem('social_radio_desabafos', JSON.stringify(updated));
+            return updated;
+        });
+        toast.success('Seu desabafo foi retirado do mural. ✨');
+    };
+
     useEffect(() => { if (chatContainerRef.current) chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight; }, [chatMessages]);
 
     return (
@@ -303,7 +319,7 @@ const RadioDasMaes = () => {
                            </button>
                         </div>
                         <div className="flex-1 overflow-y-auto no-scrollbar grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 p-1 pb-10">
-                             {desabafos.length === 0 ? ( <div className="col-span-full h-full flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} card={d} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
+                             {desabafos.length === 0 ? ( <div className="col-span-full h-full flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} isMine={d.author === myName} card={d} onDelete={handleDeleteCard} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
                         </div>
                     </motion.div>
                 )}
