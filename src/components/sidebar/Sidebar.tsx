@@ -75,7 +75,8 @@ const SidebarContent = () => {
   }, []);
 
   const handleConvidarMae = () => {
-    const mensagem = `🌸 Olá! Venha fazer parte da Plataforma Comigo (Almas Atípicas), uma rede de apoio incrível para mães.\n\nUse meu código de convite secreto para criar sua conta gratuita: *ACOLHER26*\n\nAcesse: https://almas-atipicas-v1.pages.dev`;
+    const inviteLink = `https://almas-atipicas-v1.pages.dev/login?invite=ACOLHER26`;
+    const mensagem = `🌸 Olá! Venha fazer parte da Plataforma Comigo (Almas Atípicas), uma rede de apoio incrível para mães.\n\nClique no meu link VIP abaixo para criar sua conta gratuita (o código de acesso já vai preenchido):\n\n${inviteLink}`;
     
     if (navigator.share) {
       navigator.share({

@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 const Login = () => {
+  const [searchParams] = useSearchParams();
+  const inviteParam = searchParams.get('invite');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [inviteCode, setInviteCode] = useState(inviteParam || '');
+  const [isSignUp, setIsSignUp] = useState(!!inviteParam);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
