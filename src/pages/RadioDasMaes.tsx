@@ -36,23 +36,23 @@ const deleteDesabafoFromDB = async (id: number) => {
 
 /* ─── Viewport Petal (fixed, flies across entire screen) ─── */
 const ViewportPetal = ({ startX, startY, id, onDone }: { startX: number; startY: number; id: number; onDone: () => void }) => {
-  const vx = (Math.random() - 0.5) * 400;
-  const vy = -(Math.random() * 300 + 80);
-  const rotate = Math.random() * 720 - 360;
-  const dur = 1.6 + Math.random() * 0.8;
+  const vx = (Math.random() - 0.5) * 600;
+  const vy = -(Math.random() * 450 + 120);
+  const rotate = Math.random() * 900 - 450;
+  const dur = 3.5 + Math.random() * 1.5;
 
   useEffect(() => {
-    const t = setTimeout(onDone, (dur + 0.3) * 1000);
+    const t = setTimeout(onDone, (dur + 0.5) * 1000);
     return () => clearTimeout(t);
   }, []); // eslint-disable-line
 
   return (
     <motion.span
       key={id}
-      initial={{ x: startX, y: startY, opacity: 0.85, scale: 1.2, rotate: 0 }}
-      animate={{ x: startX + vx, y: startY + vy, opacity: 0, scale: 0.2, rotate }}
-      transition={{ duration: dur, ease: 'easeOut' }}
-      className="fixed pointer-events-none select-none text-xl z-[9999]"
+      initial={{ x: startX, y: startY, opacity: 0.95, scale: 2.2, rotate: 0 }}
+      animate={{ x: startX + vx, y: startY + vy, opacity: 0, scale: 0.3, rotate }}
+      transition={{ duration: dur, ease: [0.2, 0.8, 0.4, 1] }}
+      className="fixed pointer-events-none select-none text-5xl z-[9999]"
       style={{ left: 0, top: 0 }}
     >🌸</motion.span>
   );
@@ -192,14 +192,18 @@ const RadioDasMaes = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number>(0);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const [myName] = useState(() => {
     try { const p = localStorage.getItem('almas_empreendedora_profile'); return p ? JSON.parse(p).nomeEmpreendedora || 'Mãe' : 'Mãe'; } catch { return 'Mãe'; }
   });
   const [myEmoji] = useState(() => avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)]);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [roseMessages]);
+  // Scroll only the chat container, never the whole page
+  useEffect(() => {
+    const el = chatContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [roseMessages]);
 
   // Simulated participants join after entering
   useEffect(() => {
@@ -476,8 +480,8 @@ const RadioDasMaes = () => {
                     exit={{ height: 0, opacity: 0 }}
                     className="relative border-t border-white/5"
                   >
-                    {/* Messages feed */}
-                    <div className="h-56 overflow-y-auto px-5 pt-5 pb-2 space-y-1 bg-gradient-to-b from-[#130a10] to-[#0a0609]">
+                    {/* Messages feed — ref scroll, no page jump */}
+                    <div ref={chatContainerRef} className="h-56 overflow-y-auto px-5 pt-5 pb-2 space-y-1 bg-gradient-to-b from-[#130a10] to-[#0a0609]">
                       {roseMessages.length === 0 ? (
                         <div className="h-full flex items-center justify-center">
                           <p className="text-white/20 text-xs font-bold italic text-center">
@@ -496,7 +500,6 @@ const RadioDasMaes = () => {
                           ))}
                         </AnimatePresence>
                       )}
-                      <div ref={chatEndRef} />
                     </div>
 
                     {/* Input bar */}
