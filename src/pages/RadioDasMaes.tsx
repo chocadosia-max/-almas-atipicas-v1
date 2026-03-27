@@ -14,8 +14,8 @@ const BASE_BUBBLE_SIZE = 55;
 const avatarEmojis = ['🌸', '🌺', '🌷', '🌻', '🦋', '🌙', '⭐', '🫶', '💜', '🌿', '✨', '💎'];
 const moodEmojis = ['😊', '😴', '🤯', '🫶', '🧘', '☕', '🌟', '🌙', '🫂'];
 
-// Changing the key to v2 automatically clears all the old problematic cards
-const MURAL_STORAGE_KEY = 'social_radio_mural_v2';
+// Changing the key to v3 automatically clears all the old problematic cards
+const MURAL_STORAGE_KEY = 'social_radio_mural_v3';
 
 /* ─── UI Helpers ─── */
 const Firefly = () => {
@@ -54,7 +54,7 @@ const FloatingBubble = ({ participant, index, total, isSelected, isReceivingHear
 const MuralCard = ({ card, onPlay, onDelete, isMine }: any) => {
     const rotation = useMemo(() => Math.random() * 4 - 2, []);
     return (
-        <motion.div initial={{ scale: 0.9, opacity: 0, rotate: rotation }} animate={{ scale: 1, opacity: 1, rotate: rotation }} whileHover={{ scale: 1.02, rotate: 0, zIndex: 10 }} className="group relative bg-white/90 backdrop-blur-sm p-6 shadow-2xl rounded-[2.5rem] border border-white flex flex-col gap-5 overflow-hidden h-fit">
+        <motion.div initial={{ scale: 0.9, opacity: 0, rotate: rotation }} animate={{ scale: 1, opacity: 1, rotate: rotation }} whileHover={{ scale: 1.02, rotate: 0, zIndex: 10 }} className="group relative bg-white/90 backdrop-blur-sm p-6 shadow-2xl rounded-[2.5rem] border border-white flex flex-col gap-5 overflow-hidden min-h-[260px] shrink-0">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-pink-500/10 rounded-full mt-4" />
             
             <div className="flex items-center justify-between relative z-10">
@@ -314,7 +314,10 @@ const RadioDasMaes = () => {
                     <motion.div key="mural-layout" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="w-full h-fit flex flex-col bg-pink-50/30 rounded-[3.5rem] p-8 border border-white relative">
                         <div className="flex items-center justify-between mb-8"> 
                            <div className="flex flex-col">
-                              <h2 className="text-3xl font-black text-gray-900 leading-none tracking-tight">Mural de <span className="text-pink-500">Apoio</span></h2>
+                              <div className="flex items-center gap-3">
+                                 <h2 className="text-3xl font-black text-gray-900 leading-none tracking-tight">Mural de <span className="text-pink-500">Apoio</span></h2>
+                                 <span className="bg-pink-100 text-pink-600 text-[10px] font-black px-2 py-0.5 rounded-full border border-pink-200 shadow-sm">v3.0</span>
+                              </div>
                               <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2"><Sparkles size={14} className="text-pink-300" /> Sintonize com outras jornadas</p>
                            </div>
                            <button onClick={toggleRecording} className={`flex items-center gap-3 px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-900 text-white hover:bg-pink-600'}`}>
