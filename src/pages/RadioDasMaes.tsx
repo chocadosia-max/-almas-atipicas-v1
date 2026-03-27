@@ -160,6 +160,7 @@ const RadioDasMaes = () => {
   
   const [isRecordingMsg, setIsRecordingMsg] = useState(false);
   const [recordedMsgBlob, setRecordedMsgBlob] = useState<Blob | null>(null);
+  const [heartsSent, setHeartsSent] = useState<Set<string>>(new Set());
 
   const channelRef = useRef<any>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -247,6 +248,9 @@ const RadioDasMaes = () => {
 
   const handleSendHeart = () => {
     if (!selectedTargetId) { toast.info('Selecione uma bolha primeiro.'); return; }
+    if (heartsSent.has(selectedTargetId)) { toast.info('Você já enviou coração para esta mãe!'); return; }
+    
+    setHeartsSent(prev => new Set(prev).add(selectedTargetId));
     channelRef.current?.send({ type: 'broadcast', event: 'heart-event', payload: { targetId: selectedTargetId } });
     triggerHeartVisuals(selectedTargetId);
   };
@@ -419,7 +423,11 @@ const RadioDasMaes = () => {
                         <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Sua mensagem..." className="flex-1 bg-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none focus:bg-white/10 transition-all" />
                         <button onClick={handleSendMessage} className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white hover:bg-white/20"><Send size={18} /></button>
                         <button onClick={startRecordingMsg} className="w-12 h-12 bg-pink-500/20 text-pink-500 border border-pink-500/30 rounded-xl flex items-center justify-center hover:bg-pink-500 hover:text-white transition-all"><Mic size={18} /></button>
-                        <button onClick={handleSendHeart} className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all ${selectedTargetId ? 'bg-pink-500 shadow-lg shadow-pink-500/40 scale-110' : 'bg-white/5 opacity-20'}`}>❤️</button>
+                        <button onClick={handleSendHeart} 
+                          title={heartsSent.has(selectedTargetId) ? "Você já amou esta participante" : "Enviar ❤️"}
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all ${selectedTargetId && !heartsSent.has(selectedTargetId) ? 'bg-pink-500 shadow-lg shadow-pink-500/40 scale-110' : 'bg-white/5 opacity-20'}`}>
+                          {heartsSent.has(selectedTargetId) ? '✔️' : '❤️'}
+                        </button>
                       </>
                     )}
                     <button onClick={leaveSocialRoom} className="p-2 text-white/20 hover:text-red-400 transition-colors ml-2"><PhoneOff size={18} /></button>
