@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, ArrowLeft, Volume2, Music, 
   Wind, Sparkles, MessageSquare, Trash2, 
-  Play, Pause, RefreshCw, X
+  Play, Pause, RefreshCw, X, Send,
+  Frown, Ghost, Sun, UserPlus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,14 +20,28 @@ const AFFIRMATIONS = [
   "Você merece cuidado tanto quanto seu pequeno.",
 ];
 
+const SUPPORT_MESSAGES = [
+  "Nós te ouvimos. Seu peso agora é mais leve.",
+  "Você é a melhor mãe que seu filho poderia ter.",
+  "Não se culpe por estar exausta. Respire.",
+  "Sua força é admirável, mas você também pode descansar.",
+  "O amor que você dedica volta para você em forma de cura.",
+  "Estamos juntas com você nesta caminhada.",
+  "Libere a culpa. Você está fazendo o impossível todos os dias.",
+];
+
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 const MomentoPausa = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<'intro' | 'respiro' | 'afirma' | 'desabafo'>('intro');
   const [breathingText, setBreathingText] = useState('Inspira...');
   const [affIndex, setAffIndex] = useState(0);
+  
+  // Desabafo State
   const [ventText, setVentText] = useState('');
-  const [ventingActive, setVentingActive] = useState(false);
+  const [isExploding, setIsExploding] = useState(false);
+  const [showSupport, setShowSupport] = useState(false);
+  const [randomSupport, setRandomSupport] = useState("");
 
   // Efeito Respiração
   useEffect(() => {
@@ -46,28 +61,41 @@ const MomentoPausa = () => {
     return () => clearInterval(t);
   }, [mode]);
 
-  const handleDesabafar = () => {
+  // Lógica do Balão
+  const handleExplode = () => {
     if (!ventText) return;
-    setVentingActive(true);
-    // Animação de sumir o texto após 3 segundos
+    setIsExploding(true);
+    
+    // Selecionar mensagem de apoio
+    const msg = SUPPORT_MESSAGES[Math.floor(Math.random() * SUPPORT_MESSAGES.length)];
+    setRandomSupport(msg);
+
+    // Timeline da explosão
     setTimeout(() => {
+      setIsExploding(false);
       setVentText('');
-      setVentingActive(false);
-    }, 4000);
+      setShowSupport(true);
+    }, 1000);
+
+    // Esconder apoio após alguns segundos
+    setTimeout(() => {
+      setShowSupport(false);
+    }, 6000);
   };
+
+  // Cálculo do tamanho do balão (cresce conforme digita)
+  const balloonScale = 0.5 + Math.min(ventText.length / 50, 1.5);
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden font-sans">
       
       {/* Background Zen Dinâmico */}
       <div className="absolute inset-0 bg-[#4B1528] overflow-hidden">
-        {/* Camada de Imagem Gerada (Base) */}
         <div 
           className="absolute inset-0 opacity-40 bg-cover bg-center mix-blend-overlay"
           style={{ backgroundImage: `url('/zen_meditation_background_atipica_1774585593910.png')` }}
         />
         
-        {/* Gradientes Animados Orbitais */}
         <motion.div 
           animate={{ x: [0, 40, 0], y: [0, -30, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
@@ -78,27 +106,6 @@ const MomentoPausa = () => {
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute -bottom-20 -right-20 w-[600px] h-[600px] bg-[#F4C0D1]/15 rounded-full blur-[100px]"
         />
-        
-        {/* Partículas (Pontos de Luz) */}
-        <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
-          {[...Array(12)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: Math.random() * 100 + "%", y: Math.random() * 100 + "%" }}
-              animate={{ 
-                opacity: [0, 1, 0], 
-                y: ["0%", "-10%"],
-                scale: [0, 1.2, 0]
-              }}
-              transition={{ 
-                duration: 5 + Math.random() * 5, 
-                repeat: Infinity, 
-                delay: Math.random() * 5 
-              }}
-              className="absolute w-2 h-2 bg-white rounded-full blur-[2px]"
-            />
-          ))}
-        </div>
       </div>
 
       {/* Interface */}
@@ -112,11 +119,6 @@ const MomentoPausa = () => {
           >
             <ArrowLeft size={16} /> Voltar para o Diário
           </button>
-          
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-[10px] font-black uppercase opacity-60 tracking-[2px]">Ambiente Seguro</span>
-          </div>
         </div>
 
         {/* Conteúdo Dinâmico Central */}
@@ -148,9 +150,9 @@ const MomentoPausa = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                   {[
-                    { id: 'respiro', icon: Wind, label: 'Respiração Guiada', desc: '4 segundos para cada fase', color: 'hover:bg-blue-500/20 shadow-blue-500/10' },
-                    { id: 'afirma', icon: Sparkles, label: 'Afirmações Positivas', desc: 'Lembretes do seu valor', color: 'hover:bg-amber-500/20 shadow-amber-500/10' },
-                    { id: 'desabafo', icon: MessageSquare, label: 'Desabafo Digital', desc: 'Escreva e veja a carga sumir', color: 'hover:bg-emerald-500/20 shadow-emerald-500/10' },
+                    { id: 'respiro', icon: Wind, label: 'Respiração Guiada', desc: '4 segundos para cada fase', color: 'hover:bg-blue-500/20' },
+                    { id: 'afirma', icon: Sparkles, label: 'Afirmações Positivas', desc: 'Lembretes do seu valor', color: 'hover:bg-amber-500/20' },
+                    { id: 'desabafo', icon: MessageSquare, label: 'Balão do Desabafo', desc: 'Libere o peso da sua mente', color: 'hover:bg-red-500/20' },
                   ].map((btn) => {
                     const Icon = btn.icon;
                     return (
@@ -165,7 +167,7 @@ const MomentoPausa = () => {
                           <Icon size={24} />
                         </div>
                         <h3 className="text-white font-bold text-lg mb-1">{btn.label}</h3>
-                        <p className="text-white/50 text-xs">{btn.desc}</p>
+                        <p className="text-white/50 text-xs text-center">{btn.desc}</p>
                       </motion.button>
                     );
                   })}
@@ -182,124 +184,137 @@ const MomentoPausa = () => {
                 exit={{ opacity: 0 }}
                 className="flex flex-col items-center"
               >
-                <div className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center mb-12">
-                  <motion.div
-                    animate={{ scale: [1, 1.8], opacity: [0.6, 0] }}
-                    transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
-                    className="absolute inset-0 rounded-full border-2 border-white/30"
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.4, 1] }}
-                    transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
-                    className="w-44 h-44 md:w-52 md:h-52 bg-white/20 backdrop-blur-3xl rounded-full border-2 border-white/60 shadow-[0_0_80px_rgba(255,255,255,0.4)] flex items-center justify-center"
-                  >
-                    <motion.h2 
-                      key={breathingText}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="text-white text-3xl md:text-4xl font-serif font-black italic"
-                    >
-                      {breathingText}
-                    </motion.h2>
+                <div className="relative w-80 h-80 flex items-center justify-center mb-12">
+                  <motion.div animate={{ scale: [1, 1.8], opacity: [0.6, 0] }} transition={{ repeat: Infinity, duration: 8 }} className="absolute inset-0 rounded-full border-2 border-white/30" />
+                  <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 8 }} className="w-52 h-52 bg-white/20 backdrop-blur-3xl rounded-full border-2 border-white/60 flex items-center justify-center">
+                    <h2 className="text-white text-4xl font-serif font-black italic">{breathingText}</h2>
                   </motion.div>
                 </div>
-                <button 
-                  onClick={() => setMode('intro')}
-                  className="px-8 py-3 bg-white/10 hover:bg-white text-white hover:text-[var(--rosa-forte)] font-bold rounded-2xl transition-all border border-white/20"
-                >
-                  Concluir Exercício
-                </button>
+                <button onClick={() => setMode('intro')} className="px-8 py-3 bg-white/10 hover:bg-white text-white hover:text-[var(--rosa-forte)] font-bold rounded-2xl transition-all border border-white/20">Finalizar</button>
               </motion.div>
             )}
 
             {/* 3. AFIRMAÇÕES */}
             {mode === 'afirma' && (
-              <motion.div
-                key="afirma"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="flex flex-col items-center max-w-xl"
-              >
+              <motion.div key="afirma" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex flex-col items-center max-w-xl">
                 <Sparkles className="text-amber-300 mb-8 opacity-50" size={48} />
-                <div className="min-h-[200px] flex items-center">
-                  <AnimatePresence mode="wait">
-                    <motion.p
-                      key={affIndex}
-                      initial={{ opacity: 0, filter: 'blur(10px)' }}
-                      animate={{ opacity: 1, filter: 'blur(0px)' }}
-                      exit={{ opacity: 0, filter: 'blur(10px)' }}
-                      transition={{ duration: 1 }}
-                      className="text-3xl md:text-4xl lg:text-5xl font-medium text-white drop-shadow-2xl leading-tight font-serif italic"
-                    >
-                      "{AFFIRMATIONS[affIndex]}"
-                    </motion.p>
-                  </AnimatePresence>
-                </div>
+                <AnimatePresence mode="wait"><motion.p key={affIndex} initial={{ opacity: 0, filter: 'blur(10px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} exit={{ opacity: 0, filter: 'blur(10px)' }} transition={{ duration: 1 }} className="text-4xl md:text-5xl font-medium text-white font-serif italic">"{AFFIRMATIONS[affIndex]}"</motion.p></AnimatePresence>
                 <div className="flex gap-4 mt-12">
                    <button onClick={() => setAffIndex(prev => (prev + 1) % AFFIRMATIONS.length)} className="p-4 bg-white/10 rounded-full text-white border border-white/20"><RefreshCw size={20} /></button>
-                   <button onClick={() => setMode('intro')} className="px-8 py-3 bg-white text-[var(--rosa-forte)] font-black rounded-2xl shadow-lg">Finalizar</button>
+                   <button onClick={() => setMode('intro')} className="px-8 py-3 bg-white text-[var(--rosa-forte)] font-black rounded-2xl shadow-lg">Voltar</button>
                 </div>
               </motion.div>
             )}
 
-            {/* 4. DESABAFO DIGITAL */}
+            {/* 4. BALÃO DO DESABAFO (ATUALIZADO) */}
             {mode === 'desabafo' && (
               <motion.div
                 key="desabafo"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center w-full"
+                className="flex flex-col items-center w-full relative"
               >
-                <h2 className="text-2xl font-bold text-white mb-4">O que está pesando hoje?</h2>
-                <p className="text-white/60 text-sm mb-6">Escreva abaixo tudo o que você gostaria de colocar pra fora. Ao clicar em liberar, as palavras vão sumir, simbolizando você soltando esse peso. 🧘‍♀️</p>
-                
-                <div className="relative w-full max-w-2xl bg-white/10 backdrop-blur-xl rounded-[2rem] border border-white/20 p-6 shadow-2xl">
+                {/* ÁREA DO BALÃO */}
+                <div className="relative h-64 md:h-80 w-full flex items-center justify-center mb-4">
+                  
+                  {/* EXPLOSÃO VISUAL */}
                   <AnimatePresence>
-                    {!ventingActive ? (
-                      <motion.textarea
-                        key="input"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, y: -50, filter: 'blur(20px)', scale: 1.1 }}
-                        transition={{ duration: 3 }}
-                        value={ventText}
-                        onChange={(e) => setVentText(e.target.value)}
-                        className="w-full h-48 bg-transparent text-white placeholder-white/30 text-xl md:text-2xl resize-none outline-none font-medium italic"
-                        placeholder="Ex: Estou cansada da burocracia do plano de saúde..."
-                      />
-                    ) : (
+                    {isExploding && (
                       <motion.div 
-                        key="cleaning"
-                        initial={{ opacity: 1 }}
-                        animate={{ opacity: 0, y: -100, filter: 'blur(30px)' }}
-                        transition={{ duration: 3.5 }}
-                        className="w-full h-48 flex items-center justify-center text-white/40 text-2xl italic px-4"
+                        initial={{ scale: 1, opacity: 1 }}
+                        animate={{ scale: 4, opacity: 0 }}
+                        className="absolute w-32 h-32 bg-white rounded-full blur-2xl z-30"
+                      />
+                    )}
+                  </AnimatePresence>
+
+                  {/* O BALÃO VERMELHO */}
+                  <AnimatePresence>
+                    {!isExploding && ventText.length > 0 && (
+                      <motion.div
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ 
+                          scale: balloonScale, 
+                          opacity: 1,
+                          y: [0, -10, 0],
+                        }}
+                        transition={{ 
+                          scale: { type: 'spring', stiffness: 100, damping: 10 },
+                          y: { repeat: Infinity, duration: 4, ease: "easeInOut" }
+                        }}
+                        className="relative"
                       >
-                         Deixando ir... {ventText}
+                        {/* Corpo do Balão */}
+                        <div className="w-32 h-40 bg-red-500 rounded-t-[50%] rounded-b-[40%] shadow-[inset_-10px_-10px_30px_rgba(0,0,0,0.2),0_20px_40px_rgba(239,68,68,0.3)] border-r-4 border-red-600 relative overflow-hidden">
+                           {/* Brilho */}
+                           <div className="absolute top-4 left-4 w-8 h-12 bg-white/20 rounded-full blur-[2px]" />
+                        </div>
+                        {/* Cordinha */}
+                        <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 w-0.5 h-16 bg-white/40" />
+                        <div className="absolute bottom-[-5px] left-1/2 -translate-x-1/2 w-4 h-2 bg-red-700 rounded-full" />
+                      </motion.div>
+                    )}
+                    
+                    {!isExploding && ventText.length === 0 && (
+                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} className="text-white/40 font-serif italic text-xl">
+                          Escreva abaixo para inflar o balão do desabafo...
+                       </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* MENSAGEM DE APOIO APÓS EXPLODIR */}
+                  <AnimatePresence>
+                    {showSupport && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -50, scale: 1.2 }}
+                        className="absolute z-40 bg-white/95 backdrop-blur-md p-6 rounded-[2rem] border-2 border-green-200 shadow-2xl max-w-sm"
+                      >
+                        <div className="flex flex-col items-center gap-4">
+                           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                             <Sun size={24} />
+                           </div>
+                           <p className="text-[var(--texto-escuro)] font-bold text-lg leading-relaxed">
+                             {randomSupport}
+                           </p>
+                           <span className="text-xs font-black uppercase tracking-widest text-[var(--rosa-forte)] opacity-60">Você não atravessa isso sozinha</span>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
+                </div>
+
+                {/* CAIXA DE TEXTO REDUZIDA */}
+                <div className="relative w-full max-w-lg bg-white/10 backdrop-blur-xl rounded-[2rem] border border-white/20 p-5 shadow-2xl">
+                  <textarea
+                    disabled={isExploding}
+                    value={ventText}
+                    onChange={(e) => setVentText(e.target.value)}
+                    className="w-full h-24 bg-transparent text-white placeholder-white/20 text-lg resize-none outline-none font-medium italic overflow-hidden"
+                    placeholder="O que está tirando sua paz agora?"
+                  />
                   
-                  {!ventingActive && (
-                    <div className="flex justify-end mt-4">
-                      <button 
-                        onClick={handleDesabafar}
-                        disabled={!ventText}
-                        className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg disabled:opacity-30 disabled:grayscale transition-all hover:scale-105 active:scale-95"
-                      >
-                        <Wind size={18} /> LIBERAR ESTE PESO
-                      </button>
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="text-[10px] font-black uppercase text-white/40 tracking-widest">
+                      {ventText.length} caracteres acumulados
                     </div>
-                  )}
+                    <button 
+                      onClick={handleExplode}
+                      disabled={!ventText || isExploding}
+                      className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg disabled:opacity-30 transition-all hover:scale-105 active:scale-95 text-sm"
+                    >
+                      <Wind size={16} /> EXPLODIR PESO
+                    </button>
+                  </div>
                 </div>
 
                 <button 
                   onClick={() => setMode('intro')}
-                  className="mt-12 text-white/50 hover:text-white font-bold transition-colors flex items-center gap-2"
+                  className="mt-6 text-white/30 hover:text-white font-bold transition-colors flex items-center gap-1.5 text-xs uppercase tracking-widest"
                 >
-                  <ArrowLeft size={16} /> Voltar ao menu de pausa
+                  <ArrowLeft size={14} /> Voltar ao menu
                 </button>
               </motion.div>
             )}
@@ -309,28 +324,21 @@ const MomentoPausa = () => {
 
         {/* Footer Playlists */}
         <div className="w-full p-8 flex flex-col items-center">
-          <div className="bg-white/5 backdrop-blur-2xl w-full max-w-xl rounded-[2rem] p-5 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-white">
-             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#1DB954]/20 rounded-xl flex items-center justify-center text-[#1DB954]">
-                  <Volume2 size={24} />
+          <div className="bg-white/5 backdrop-blur-2xl w-full max-w-xl rounded-[2rem] p-4 border border-white/10 flex items-center justify-between text-white">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#1DB954]/20 rounded-lg flex items-center justify-center text-[#1DB954]">
+                  <Volume2 size={20} />
                 </div>
                 <div className="text-left">
-                  <div className="text-sm font-bold opacity-100">Playlist Relaxante</div>
-                  <div className="text-[10px] uppercase tracking-widest opacity-50">Sons da Natureza & Lofi</div>
+                  <div className="text-xs font-bold">Playlist Relaxante</div>
+                  <div className="text-[10px] opacity-50 uppercase tracking-widest">Lofi Zen</div>
                 </div>
              </div>
-             
-             <div className="flex gap-2">
-               <a href="https://open.spotify.com/playlist/37i9dQZF1DWZq91oLsHZvy" target="_blank" rel="noreferrer" className="bg-[#1DB954] hover:bg-[#1ed760] transition-transform active:scale-95 p-3 rounded-full shadow-lg">
-                 <Play size={16} fill="black" className="text-black" />
-               </a>
-               <a href="https://open.spotify.com/playlist/37i9dQZF1DWUa8ZRTvlZ2C" target="_blank" rel="noreferrer" className="bg-white/10 hover:bg-white/20 p-3 rounded-full border border-white/20">
-                 <Music size={16} />
-               </a>
-             </div>
+             <a href="https://open.spotify.com/playlist/37i9dQZF1DWZq91oLsHZvy" target="_blank" rel="noreferrer" className="bg-[#1DB954] p-2.5 rounded-full shadow-lg">
+                <Play size={14} fill="black" className="text-black" />
+             </a>
           </div>
-          
-          <p className="mt-8 text-white/30 text-[10px] font-black uppercase tracking-[4px]">Pausa Purificadora • Almas Atípicas</p>
+          <p className="mt-6 text-white/20 text-[9px] font-black uppercase tracking-[4px]">Pausa Purificadora • Almas Atípicas</p>
         </div>
 
       </div>
