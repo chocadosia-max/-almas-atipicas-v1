@@ -408,14 +408,19 @@ const RadioDasMaes = () => {
                   </div>
                 </div>
 
-                {/* Sub-chat (Last messages) */}
-                <div ref={chatRef} className="h-16 overflow-y-auto px-4 py-2 bg-black/10 rounded-2xl space-y-1.5 no-scrollbar scroll-smooth border border-white/5">
-                   {chatMessages.length === 0 && <div className="text-[9px] text-white/10 font-bold uppercase py-2">O seu silêncio também é acolhido...</div>}
+                {/* Sub-chat (Last messages) - Increased height and improved readability */}
+                <div ref={chatRef} className="h-28 overflow-y-auto px-4 py-3 bg-white/40 rounded-3xl space-y-2 no-scrollbar scroll-smooth border border-black/5 shadow-inner">
+                   {chatMessages.length === 0 && <div className="text-[10px] text-pink-900/40 font-black uppercase py-4 text-center">Inicie um acolhimento enviando uma mensagem...</div>}
                    {chatMessages.map(m => (
-                     <div key={m.id} className="text-[11px] text-white/60 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1">
-                        <span className="text-pink-400 font-bold shrink-0">{m.name}:</span>
-                        {m.text && <span>{m.text}</span>}
-                        {m.audio && <button onClick={() => { const a = new Audio(m.audio); a.play(); }} className="flex items-center gap-1.5 px-2 py-0.5 bg-pink-500/20 rounded-full text-pink-300"><Volume2 size={10} /> <span className="text-[8px] font-black uppercase">Ouvir áudio</span></button>}
+                     <div key={m.id} className="text-[12px] flex items-start gap-2 animate-in fade-in slide-in-from-bottom-1 bg-white/30 backdrop-blur-sm p-2 rounded-2xl border border-white/50 shadow-sm">
+                        <span className="text-pink-600 font-black shrink-0">{m.name}:</span>
+                        <span className="text-gray-900 font-medium break-words leading-tight">{m.text}</span>
+                        {m.audio && (
+                           <button onClick={() => { const a = new Audio(m.audio); a.play(); }} className="flex items-center gap-1.5 px-3 py-1 bg-pink-500/20 rounded-full text-pink-700 hover:bg-pink-500/30 transition-all ml-auto">
+                              <Volume2 size={12} /> 
+                              <span className="text-[9px] font-black uppercase">Ouvir</span>
+                           </button>
+                        )}
                      </div>
                    ))}
                 </div>
