@@ -64,7 +64,7 @@ const RendaParaMae = () => {
   }, [profile]);
 
   const handleUpdateProfile = (field: string, value: any) => {
-    setProfile(p => ({ ...p, [field]: value }));
+    setProfile((p: any) => ({ ...p, [field]: value }));
   };
 
   const handlePostVaga = (e: React.FormEvent) => {
@@ -267,19 +267,23 @@ const RendaParaMae = () => {
                  <div className="bg-[#4B1528] rounded-[3rem] p-8 md:p-10 shadow-2xl relative overflow-hidden border-4 border-white">
                     <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-pink-500/10 rounded-full blur-[60px]" />
                     <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3 italic font-serif leading-tight"><Building2 size={24} className="text-pink-400" /> Convocar Mães Atípicas</h3>
-                    <form onSubmit={handlePostVaga} className="space-y-4">
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <input required value={novaVagaForm.funcao} onChange={e=>setNovaVagaForm(pv=>({...pv, funcao: e.target.value}))} className="p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-bold placeholder:text-white/30" placeholder="Título da Função (ex: Designer)" />
-                          <div className="flex gap-2">
-                             <input value={novaVagaForm.salario} onChange={e=>setNovaVagaForm(pv=>({...pv, salario: e.target.value}))} className="flex-1 p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-bold placeholder:text-white/30" placeholder="Salário (Opcional)" />
-                             <select value={novaVagaForm.tipo} onChange={e=>setNovaVagaForm(pv=>({...pv, tipo: e.target.value}))} className="p-4 bg-white text-[#4B1528] rounded-2xl font-black text-xs outline-none cursor-pointer">
+                    <form onSubmit={handlePostVaga} className="space-y-5 relative z-10">
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="md:col-span-1">
+                             <input required value={novaVagaForm.funcao} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, funcao: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-bold placeholder:text-white/40 shadow-inner" placeholder="Função..." />
+                          </div>
+                          <div className="md:col-span-1">
+                             <input value={novaVagaForm.salario} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, salario: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-bold placeholder:text-white/30" placeholder="R$ Salário" />
+                          </div>
+                          <div className="md:col-span-1">
+                             <select value={novaVagaForm.tipo} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, tipo: e.target.value}))} className="w-full p-4 bg-white text-[#4B1528] rounded-2xl font-black text-xs outline-none cursor-pointer hover:bg-pink-50 transition-all shadow-md">
                                 <option>Home Office</option>
                                 <option>Presencial</option>
                                 <option>Híbrido</option>
                              </select>
                           </div>
                        </div>
-                       <textarea required rows={3} value={novaVagaForm.descricao} onChange={e=>setNovaVagaForm(pv=>({...pv, descricao: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-medium placeholder:text-white/30 resize-none" placeholder="Conte mais sobre a vaga, flexibilidade e horários..."></textarea>
+                       <textarea required rows={3} value={novaVagaForm.descricao} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, descricao: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-medium placeholder:text-white/30 resize-none shadow-inner" placeholder="Conte mais sobre a vaga, flexibilidade e horários..."></textarea>
                        <button type="submit" className="w-full py-5 bg-[var(--rosa-forte)] text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-3 uppercase tracking-[4px] text-xs hover:scale-[1.01] active:scale-95 transition-all">
                           <Send size={18} /> LANÇAR OPORTUNIDADE
                        </button>
