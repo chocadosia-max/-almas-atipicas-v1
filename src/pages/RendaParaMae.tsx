@@ -21,32 +21,84 @@ const CURSOS_LINKS = [
   { name: "Coursera - Bolsas para Mulheres", link: "https://www.coursera.org" },
 ];
 
-const RendaParaMae = () => {
+const DB_NAME_EMP = 'AlmasEmpDB';
+const STORE_PROF = 'profile';
+const STORE_VAGAS = 'vagas';
+const initEmpDB = () => new Promise<IDBDatabase>((resolve, reject) => {
+  const req = indexedDB.open(DB_NAME_EMP, 1);
+  req.onupgradeneeded = () => {
+    if(!req.result.objectStoreNames.contains(STORE_PROF)) req.result.createObjectStore(STORE_PROF, { keyPath: 'id' });
+    if(!req.result.objectStoreNames.contains(STORE_VAGAS)) req.result.createObjectStore(STORE_VAGAS, { keyPath: 'id' });
+  };
+  req.onsuccess = () => resolve(req.result);
+  req.onerror = () => reject(req.error);
+});
+const getProfileDB = async () => {
+  const db = await initEmpDB().catch(()=>null);
+  if(!db) return null;
+  return new Promise<any>((resolve) => {
+    const tx = db.transaction(STORE_PROF, 'readonly');
+    const req = tx.objectStore(STORE_PROF).get('me');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  });
+};
+const saveProfileDB = async (prof: any) => {
+  const db = await initEmpDB().catch(()=>null);
+  if(!db) return;
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(STORE_PROF, 'readwrite');
+    tx.objectStore(STORE_PROF).put({ id: 'me', ...prof });
+    tx.oncomplete = () => resolve();
+  });
+};
+const getVagasDB = async () => {
+  const db = await initEmpDB().catch(()=>null);
+  if(!db) return [];
+  return new Promise<any[]>((resolve) => {
+    const tx = db.transaction(STORE_VAGAS, 'readonly');
+    const req = tx.objectStore(STORE_VAGAS).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => resolve([]);
+  });
+};
+const saveVagaDB = async (vaga: any) => {
+  const db = await initEmpDB().catch(()=>null);
+  if(!db) return;
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(STORE_VAGAS, 'readwrite');
+    tx.objectStore(STORE_VAGAS).put(vaga);
+    tx.oncomplete = () => resolve();
+  });
+};
+const deleteVagaDB = async (id: number) => {
+  const db = await initEmpDB().catch(()=>null);
+  if(!db) return;
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(STORE_VAGAS, 'readwrite');
+    tx.objectStore(STORE_VAGAS).delete(id);
+    tx.oncomplete = () => resolve();
+  });
+};
+
   const [activeTab, setActiveTab] = useState<'vagas' | 'perfil'>('vagas');
   const [showFlowers, setShowFlowers] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
 
   // Perfil da Empreendedora - Estado Centralizado
-  const [profile, setProfile] = useState(() => {
-    const saved = localStorage.getItem('almas_empreendedora_profile_v2');
-    return saved ? JSON.parse(saved) : { 
-      avatarBase64: '', 
-      isEmpreendedora: false,
-      nomeEmpreendedora: '',
-      nomeEmpresa: '',
-      cidade: '',
-      estado: '',
-      whatsapp: ''
-    };
+  const [profile, setProfile] = useState<any>({ 
+    avatarBase64: '', 
+    isEmpreendedora: false,
+    nomeEmpreendedora: '',
+    nomeEmpresa: '',
+    cidade: '',
+    estado: '',
+    whatsapp: '',
+    avatarPosition: { x: 50, y: 50 } // Percentage for crop alignment
   });
 
   // Lista de Vagas
-  const [vagas, setVagas] = useState<any[]>(() => {
-    const saved = localStorage.getItem('almas_vagas_v3');
-    if (saved) {
-      try { return JSON.parse(saved); } catch(e) { return []; }
-    }
-    return [];
-  });
+  const [vagas, setVagas] = useState<any[]>([]);
 
   // Estado do Form de Nova Vaga
   const [novaVagaForm, setNovaVagaForm] = useState({
@@ -58,9 +110,40 @@ const RendaParaMae = () => {
 
   const [systemAlert, setSystemAlert] = useState<{title: string, desc: string} | null>(null);
 
+  // Efeito para carregar DB nativamente e contornar limite localStorage
+  useEffect(() => {
+    getProfileDB().then(saved => {
+      if(saved) setProfile((p:any) => ({ ...p, ...saved }));
+      else {
+        const old = localStorage.getItem('almas_empreendedora_profile_v2');
+        if(old) setProfile((p:any) => ({ ...p, ...JSON.parse(old) }));
+      }
+    });
+
+    getVagasDB().then(saved => {
+      if(saved && saved.length > 0) {
+        saved.sort((a,b)=> Number(b.id) - Number(a.id));
+        setVagas(saved);
+      } else {
+        const old = localStorage.getItem('almas_vagas_v3');
+        if(old) {
+           const parsed = JSON.parse(old);
+           setVagas(parsed);
+           parsed.forEach((pa:any) => saveVagaDB(pa));
+        }
+      }
+    });
+  }, []);
+
   // Efeito para salvar perfil sempre que mudar
   useEffect(() => {
-    localStorage.setItem('almas_empreendedora_profile_v2', JSON.stringify(profile));
+    if (profile.nomeEmpreendedora || profile.avatarBase64) {
+      saveProfileDB(profile);
+      // Sync a minimal version to localStorage (without the giant Base64 image) for UI components
+      const minimalProfile = { ...profile, avatarBase64: '' };
+      localStorage.setItem('almas_empreendedora_profile', JSON.stringify(minimalProfile));
+      window.dispatchEvent(new Event('profileUpdated'));
+    }
   }, [profile]);
 
   const handleUpdateProfile = (field: string, value: any) => {
@@ -93,13 +176,14 @@ const RendaParaMae = () => {
         cidade: profile.cidade,
         estado: profile.estado,
         whatsapp: profile.whatsapp,
-        avatar: profile.avatarBase64
+        avatar: profile.avatarBase64,
+        avatarPosition: profile.avatarPosition
       }
     };
 
     const updated = [novaVaga, ...vagas];
     setVagas(updated);
-    localStorage.setItem('almas_vagas_v3', JSON.stringify(updated));
+    saveVagaDB(novaVaga);
     
     setNovaVagaForm({ funcao: '', salario: '', tipo: 'Home Office', descricao: '' });
     
@@ -112,8 +196,8 @@ const RendaParaMae = () => {
   const handleDeleteVaga = (id: number) => {
     const updated = vagas.filter((v: any) => v.id !== id);
     setVagas(updated);
-    localStorage.setItem('almas_vagas_v3', JSON.stringify(updated));
-    toast.success("Vaga removida.");
+    deleteVagaDB(id);
+    toast.success("Vaga marcada como preenchida e removida do feed!");
   };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,19 +284,61 @@ const RendaParaMae = () => {
               <div className="bg-white/80 shadow-2xl backdrop-blur-md rounded-[3rem] border-2 border-[var(--rosa-forte)]/20 p-8 md:p-10">
                  
                  <div className="flex flex-col md:flex-row gap-8 items-start mb-10">
-                    <div className="relative group mx-auto md:mx-0">
+                    <div className="relative group mx-auto md:mx-0 flex flex-col items-center">
                        <div className="w-40 h-40 bg-pink-50 rounded-[2.5rem] shadow-xl border-4 border-white flex items-center justify-center overflow-hidden relative">
                           {profile.avatarBase64 ? (
-                            <img src={profile.avatarBase64} alt="Me" className="w-full h-full object-cover" />
+                            <>
+                              {/* Imagem com alinhamento Customizado e Grade do Instagram no modo Edição */}
+                              <div className="absolute inset-0 z-0">
+                                 <div 
+                                   className="w-full h-full bg-no-repeat bg-cover"
+                                   style={{ 
+                                     backgroundImage: `url(${profile.avatarBase64})`,
+                                     backgroundPosition: `${profile.avatarPosition?.x || 50}% ${profile.avatarPosition?.y || 50}%`
+                                   }}
+                                 />
+                                 {showCropper && (
+                                   <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 z-10">
+                                     {[...Array(9)].map((_, i) => <div key={i} className="border border-white/60 drop-shadow-md" />)}
+                                   </div>
+                                 )}
+                              </div>
+                            </>
                           ) : (
                             <User size={64} className="text-pink-200" />
                           )}
-                          <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer">
-                             <ImageIcon className="text-white" size={32} />
+                          <label className={`absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer z-20 ${showCropper ? 'hidden' : ''}`}>
+                             <ImageIcon className="text-white drop-shadow-md" size={32} />
                              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                           </label>
                        </div>
-                       {profile.isEmpreendedora && <div className="absolute -top-3 -right-3 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl border-2 border-amber-300">👑</div>}
+                       {profile.isEmpreendedora && <div className="absolute top-0 -right-3 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl border-2 border-amber-300 z-30">👑</div>}
+                       
+                       {profile.avatarBase64 && (
+                          <div className="mt-4 w-full">
+                             <button
+                               onClick={() => setShowCropper(!showCropper)}
+                               className="text-[10px] w-full bg-pink-50 text-pink-500 font-black uppercase tracking-widest py-2 rounded-xl border border-pink-100 mb-2 hover:bg-pink-100"
+                             >
+                               {showCropper ? "Pronto" : "Alinhar Foto"}
+                             </button>
+                             
+                             <AnimatePresence>
+                               {showCropper && (
+                                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="flex flex-col gap-2 p-3 bg-white border border-pink-100 rounded-2xl shadow-lg mt-2 relative z-50 overflow-hidden">
+                                   <div>
+                                     <label className="text-[8px] font-black uppercase text-gray-400">Deslocar ← →</label>
+                                     <input type="range" min="0" max="100" value={profile.avatarPosition?.x || 50} onChange={(e) => handleUpdateProfile('avatarPosition', { ...(profile.avatarPosition || {y:50}), x: Number(e.target.value) })} className="w-full accent-[var(--rosa-forte)]" />
+                                   </div>
+                                   <div>
+                                     <label className="text-[8px] font-black uppercase text-gray-400">Deslocar ↑ ↓</label>
+                                     <input type="range" min="0" max="100" value={profile.avatarPosition?.y || 50} onChange={(e) => handleUpdateProfile('avatarPosition', { ...(profile.avatarPosition || {x:50}), y: Number(e.target.value) })} className="w-full accent-[var(--rosa-forte)]" />
+                                   </div>
+                                 </motion.div>
+                               )}
+                             </AnimatePresence>
+                          </div>
+                       )}
                     </div>
 
                     <div className="flex-1 space-y-4 w-full">
@@ -317,8 +443,16 @@ const RendaParaMae = () => {
                            {/* Perfil da Empreendedora Card */}
                            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-4 border border-gray-100 group-hover:bg-pink-50 transition-all">
                               <div className="w-12 h-12 bg-white rounded-xl shadow-sm overflow-hidden flex items-center justify-center shrink-0 border border-white relative">
-                                 {v.autor.avatar ? <img src={v.autor.avatar} alt="Empreendedora" className="w-full h-full object-cover" /> : <User className="text-gray-300" />}
-                                 <Crown size={12} className="absolute -top-1 -right-1 text-amber-500 bg-white rounded-full p-[1px]" />
+                                 {v.autor.avatar ? (
+                                   <div 
+                                     className="w-full h-full bg-no-repeat bg-cover"
+                                     style={{ 
+                                       backgroundImage: `url(${v.autor.avatar})`,
+                                       backgroundPosition: `${v.autor.avatarPosition?.x || 50}% ${v.autor.avatarPosition?.y || 50}%`
+                                     }}
+                                   />
+                                 ) : <User className="text-gray-300" />}
+                                 <Crown size={12} className="absolute -top-1 -right-1 text-amber-500 bg-white rounded-full p-[1px] shadow-sm" />
                               </div>
                               <div className="flex-1 min-w-0">
                                  <div className="text-xs font-black text-[#4B1528] truncate">{v.autor.nome}</div>
@@ -328,17 +462,18 @@ const RendaParaMae = () => {
                            </div>
 
                            <div className="flex gap-2">
-                              <a 
-                                href={`https://wa.me/55${v.autor.whatsapp?.replace(/\D/g,'')}?text=Olá ${v.autor.nome?.split(' ')[0]}, vi sua vaga de ${v.funcao} no Almas Atípicas e gostaria de participar!`} 
-                                target="_blank" 
-                                className="flex-1 py-4 bg-[#25D366] text-white rounded-xl font-black text-xs uppercase tracking-widest text-center shadow-lg hover:shadow-green-200 transition-all flex items-center justify-center gap-2"
-                              >
-                                 <Phone size={14} /> Contatar Empresa
-                              </a>
-                              {v.autor.whatsapp === profile.whatsapp && (
-                                <button onClick={() => handleDeleteVaga(v.id)} className="w-12 h-12 flex items-center justify-center bg-gray-100 text-gray-400 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all shadow-inner">
-                                   <Trash2 size={18} />
+                              {v.autor.whatsapp === profile.whatsapp ? (
+                                <button onClick={() => handleDeleteVaga(v.id)} className="w-full py-4 bg-gray-50 border border-gray-200 text-gray-400 rounded-xl hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all shadow-inner font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 group">
+                                   <CheckCircle size={18} className="group-hover:scale-110 transition-transform" /> VAGA PREENCHIDA
                                 </button>
+                              ) : (
+                                <a 
+                                  href={`https://wa.me/55${v.autor.whatsapp?.replace(/\D/g,'')}?text=Olá ${v.autor.nome?.split(' ')[0]}, vi sua vaga de ${v.funcao} no Almas Atípicas e gostaria de participar!`} 
+                                  target="_blank" 
+                                  className="w-full py-4 bg-[#25D366] text-white rounded-xl font-black text-xs uppercase tracking-widest text-center shadow-lg hover:shadow-green-200 transition-all flex items-center justify-center gap-2"
+                                >
+                                   <Phone size={14} /> Contatar Empresa
+                                </a>
                               )}
                            </div>
                          </motion.div>
