@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { 
+import {
   Headphones, Mic, StopCircle, Send, Trash2, Heart, Share2, Volume2,
   Loader2, MessageSquarePlus, Radio, Info, PhoneCall, PhoneOff
 } from 'lucide-react';
@@ -34,51 +34,50 @@ const deleteDesabafoFromDB = async (id: number) => {
   return new Promise((res, rej) => { tx.oncomplete = () => res(undefined); tx.onerror = () => rej(tx.error); });
 };
 
-/* ─── Viewport Petal (fixed, flies across entire screen) ─── */
-const ViewportPetal = ({ startX, startY, id, onDone }: { startX: number; startY: number; id: number; onDone: () => void }) => {
-  const vx = (Math.random() - 0.5) * 600;
-  const vy = -(Math.random() * 450 + 120);
-  const rotate = Math.random() * 900 - 450;
-  const dur = 3.5 + Math.random() * 1.5;
+const avatarEmojis = ['🌸', '🌺', '🌷', '🌻', '🦋', '🌙', '⭐', '🫶', '💜', '🌿'];
 
-  useEffect(() => {
-    const t = setTimeout(onDone, (dur + 0.5) * 1000);
-    return () => clearTimeout(t);
-  }, []); // eslint-disable-line
-
+/* ─── Single viewport petal ─── */
+const ViewportPetal = ({ startX, startY, id, onDone, emoji = '🌸' }: {
+  startX: number; startY: number; id: number; onDone: () => void; emoji?: string;
+}) => {
+  const vx = (Math.random() - 0.5) * (window.innerWidth * 1.2);
+  const vy = -(Math.random() * window.innerHeight * 0.85 + 120);
+  const rotate = Math.random() * 1080 - 540;
+  const dur = 3.8 + Math.random() * 1.8;
+  useEffect(() => { const t = setTimeout(onDone, (dur + 0.6) * 1000); return () => clearTimeout(t); }, []); // eslint-disable-line
   return (
     <motion.span
-      key={id}
-      initial={{ x: startX, y: startY, opacity: 0.95, scale: 2.2, rotate: 0 }}
-      animate={{ x: startX + vx, y: startY + vy, opacity: 0, scale: 0.3, rotate }}
-      transition={{ duration: dur, ease: [0.2, 0.8, 0.4, 1] }}
+      initial={{ x: startX, y: startY, opacity: 1, scale: 2.5, rotate: 0 }}
+      animate={{ x: startX + vx, y: startY + vy, opacity: 0, scale: 0.15, rotate }}
+      transition={{ duration: dur, ease: [0.15, 0.85, 0.35, 1] }}
       className="fixed pointer-events-none select-none text-5xl z-[9999]"
       style={{ left: 0, top: 0 }}
-    >🌸</motion.span>
+    >{emoji}</motion.span>
   );
 };
 
-/* ─── Rose Message — floats on stage overlay ─── */
-const RoseMessage = ({
-  msg, onExpire, onExplode
-}: { msg: any; onExpire: () => void; onExplode: (x: number, y: number) => void }) => {
+/* ─── Floating Rose Card (random position on stage, NOT stacked) ─── */
+const FloatingRoseCard = ({ msg, stageW, stageH, onExpire, onExplode }: {
+  msg: any; stageW: number; stageH: number;
+  onExpire: () => void; onExplode: (x: number, y: number) => void;
+}) => {
   const [exploded, setExploded] = useState(false);
   const [visible, setVisible] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
+  // Random position within safe zone
+  const px = 8 + Math.random() * 64;   // 8% – 72% from left
+  const py = 10 + Math.random() * 60;  // 10% – 70% from top
 
-  useEffect(() => {
-    const t = setTimeout(doExplode, 120_000);
-    return () => clearTimeout(t);
-  }, []); // eslint-disable-line
+  useEffect(() => { const t = setTimeout(doExplode, 120_000); return () => clearTimeout(t); }, []); // eslint-disable-line
 
   const doExplode = useCallback(() => {
     if (exploded) return;
     setExploded(true);
     if (ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      onExplode(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      const r = ref.current.getBoundingClientRect();
+      onExplode(r.left + r.width / 2, r.top + r.height / 2);
     }
-    setTimeout(() => { setVisible(false); onExpire(); }, 1400);
+    setTimeout(() => { setVisible(false); onExpire(); }, 1200);
   }, [exploded, onExplode, onExpire]);
 
   if (!visible) return null;
@@ -86,80 +85,112 @@ const RoseMessage = ({
   return (
     <motion.div
       ref={ref}
-      layout
-      initial={{ scale: 0, opacity: 0, y: 16 }}
-      animate={{ scale: exploded ? 0 : 1, opacity: exploded ? 0 : 1, y: 0 }}
-      exit={{ scale: 0, opacity: 0 }}
-      className="relative flex items-end gap-2 mb-3 group"
+      initial={{ scale: 0, opacity: 0, rotate: -10 }}
+      animate={exploded
+        ? { scale: 0, opacity: 0, rotate: 15 }
+        : { scale: 1, opacity: 1, rotate: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+      className="absolute cursor-pointer z-20"
+      style={{ left: `${px}%`, top: `${py}%` }}
       onClick={doExplode}
     >
-      {/* Avatar bubble */}
-      <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-lg shrink-0 shadow-lg">
-        {msg.avatar}
-      </div>
+      {/* Pulsing rose icon */}
+      <motion.div
+        animate={{ scale: [1, 1.25, 1], y: [0, -4, 0] }}
+        transition={{ repeat: Infinity, duration: 2 }}
+        className="text-3xl absolute -top-5 left-1/2 -translate-x-1/2 drop-shadow-lg select-none"
+      >🌹</motion.div>
 
-      {/* Message */}
-      <div className={`relative max-w-[75%] cursor-pointer ${exploded ? 'pointer-events-none' : ''}`}>
-        {!exploded && (
-          <motion.span
-            animate={{ scale: [1, 1.2, 1], rotate: [-5, 5, -5] }}
-            transition={{ repeat: Infinity, duration: 1.8 }}
-            className="absolute -top-4 -left-2 text-xl z-10 drop-shadow-lg"
-          >🌹</motion.span>
-        )}
-        <div className="bg-white/15 backdrop-blur-xl border border-white/25 rounded-2xl rounded-bl-sm px-4 py-3 shadow-xl group-hover:bg-white/25 transition-all">
-          <p className="text-[10px] font-black text-pink-300 mb-0.5 uppercase tracking-widest">{msg.name}</p>
-          <p className="text-sm text-white/90 font-medium leading-relaxed">{msg.text}</p>
-          <p className="text-[9px] text-white/30 font-bold mt-1 text-right">toque para libertar 🌸</p>
-        </div>
+      <div className="backdrop-blur-xl bg-white/12 border border-white/20 rounded-2xl rounded-tl-sm px-4 py-3 shadow-2xl max-w-[180px] hover:bg-white/20 transition-all">
+        <p className="text-[10px] font-black text-pink-300 uppercase tracking-widest mb-1">{msg.name}</p>
+        <p className="text-sm text-white/90 font-medium leading-snug">{msg.text}</p>
+        <p className="text-[8px] text-white/25 mt-1 text-right">toque 🌸</p>
       </div>
     </motion.div>
   );
 };
 
-/* ─── Floating Participant Bubble ─── */
-const avatarEmojis = ['🌸','🌺','🌷','🌻','🦋','🌙','⭐','🫶','💜','🌿'];
+/* ─── Rocket projectile ─── */
+const RocketProjectile = ({ fromX, fromY, toX, toY, onHit }: {
+  fromX: number; fromY: number; toX: number; toY: number; onHit: () => void;
+}) => {
+  const angle = Math.atan2(toY - fromY, toX - fromX) * (180 / Math.PI);
+  useEffect(() => { const t = setTimeout(onHit, 900); return () => clearTimeout(t); }, []); // eslint-disable-line
+  return (
+    <motion.span
+      initial={{ x: fromX, y: fromY, opacity: 1, scale: 1.5 }}
+      animate={{ x: toX, y: toY, opacity: 1, scale: 1.5 }}
+      transition={{ duration: 0.9, ease: [0.2, 0, 0.8, 1] }}
+      className="fixed pointer-events-none select-none text-4xl z-[9998]"
+      style={{ left: 0, top: 0, rotate: `${angle + 45}deg`, transformOrigin: 'center' }}
+    >🚀</motion.span>
+  );
+};
 
-const FloatingBubble = ({ participant, index, total }: { participant: any; index: number; total: number }) => {
-  // Distribute bubbles evenly in a soft ellipse across the stage
+/* ─── Participant Bubble ─── */
+const FloatingBubble = ({ participant, index, total, isHit, onBubbleRef }: {
+  participant: any; index: number; total: number;
+  isHit: boolean; onBubbleRef: (id: any, el: HTMLDivElement | null) => void;
+}) => {
   const angle = (index / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
-  const rx = 32, ry = 22;
-  const cx = 50 + Math.cos(angle) * rx;
-  const cy = 45 + Math.sin(angle) * ry;
+  const cx = 50 + Math.cos(angle) * 32;
+  const cy = 45 + Math.sin(angle) * 22;
 
   return (
     <motion.div
+      ref={el => onBubbleRef(participant.id, el)}
       initial={{ scale: 0, opacity: 0 }}
-      animate={{
-        scale: 1, opacity: 1,
-        y: [0, -10, 0, 8, 0],
-        x: [0, 4, 0, -4, 0],
-      }}
+      animate={isHit
+        ? { scale: [1, 1.3, 0.85, 1.1, 0.95, 1], rotate: [-8, 8, -6, 6, 0], opacity: 1, y: [0, -10, 0, -8, 0, 8, 0, -4, 0] }
+        : { scale: 1, opacity: 1, y: [0, -10, 0, 8, 0], x: [0, 4, 0, -4, 0] }}
       exit={{ scale: 0, opacity: 0 }}
-      transition={{
-        scale: { type: 'spring', stiffness: 260, damping: 20 },
-        opacity: { duration: 0.35 },
-        y: { duration: 4.5 + index * 0.6, repeat: Infinity, ease: 'easeInOut' },
-        x: { duration: 3.8 + index * 0.45, repeat: Infinity, ease: 'easeInOut' },
-      }}
+      transition={isHit
+        ? { duration: 0.7, ease: 'easeInOut' }
+        : {
+          scale: { type: 'spring', stiffness: 260, damping: 20 },
+          opacity: { duration: 0.35 },
+          y: { duration: 4.5 + index * 0.6, repeat: Infinity, ease: 'easeInOut' },
+          x: { duration: 3.8 + index * 0.45, repeat: Infinity, ease: 'easeInOut' },
+        }}
       className="absolute flex flex-col items-center gap-1.5"
       style={{ left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)' }}
     >
-      {/* Mic-active pulse ring */}
+      {/* Speaking pulse */}
       {participant.speaking && (
         <motion.div
-          animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }}
-          transition={{ duration: 1, repeat: Infinity }}
+          animate={{ scale: [1, 1.9, 1], opacity: [0.5, 0, 0.5] }}
+          transition={{ duration: 0.9, repeat: Infinity }}
           className="absolute rounded-full"
-          style={{ width: 70, height: 70, top: -7, left: -7, background: 'radial-gradient(circle, rgba(236,72,153,0.4), transparent 70%)' }}
+          style={{ width: 72, height: 72, top: -8, left: -8, background: 'radial-gradient(circle, rgba(236,72,153,0.45), transparent 70%)' }}
         />
       )}
-      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-300/80 to-rose-500/60 flex items-center justify-center text-3xl shadow-2xl border-4 border-white/30 backdrop-blur-sm ring-2 ring-pink-400/20">
+      {/* Hit flash */}
+      {isHit && (
+        <motion.div
+          initial={{ scale: 0, opacity: 1 }}
+          animate={{ scale: 3, opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="absolute rounded-full bg-orange-400/60 w-14 h-14"
+        />
+      )}
+      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-300/80 to-rose-500/60 flex items-center justify-center text-3xl shadow-2xl border-4 border-white/30 ring-2 ring-pink-400/20">
         {participant.emoji}
       </div>
-      <span className="text-[9px] font-black text-white/80 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full truncate max-w-[70px] shadow-sm">
+      <span className="text-[9px] font-black text-white/80 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full truncate max-w-[72px]">
         {participant.isMe ? `${participant.name} (você)` : participant.name}
       </span>
+      {/* Hit emoji */}
+      <AnimatePresence>
+        {isHit && (
+          <motion.span
+            initial={{ scale: 0, y: 0, opacity: 1 }}
+            animate={{ scale: 1.5, y: -30, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7 }}
+            className="absolute -top-6 text-2xl pointer-events-none"
+          >💥</motion.span>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -181,7 +212,7 @@ const RadioDasMaes = () => {
     });
   }, []);
 
-  /* ── Live Room ── */
+  /* ── Live Room state ── */
   const [hasJoinedLive, setHasJoinedLive] = useState(false);
   const [isJoiningLive, setIsJoiningLive] = useState(false);
   const [participants, setParticipants] = useState<any[]>([]);
@@ -189,50 +220,41 @@ const RadioDasMaes = () => {
   const [viewportPetals, setViewportPetals] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [micActive, setMicActive] = useState(false);
+  const [micLevel, setMicLevel] = useState(0);
+  const [hitParticipantId, setHitParticipantId] = useState<any>(null);
+  const [rocket, setRocket] = useState<{ fromX: number; fromY: number; toX: number; toY: number } | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number>(0);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const rocketBtnRef = useRef<HTMLButtonElement>(null);
+  const bubbleRefsMap = useRef<Map<any, HTMLDivElement>>(new Map());
 
   const [myName] = useState(() => {
     try { const p = localStorage.getItem('almas_empreendedora_profile'); return p ? JSON.parse(p).nomeEmpreendedora || 'Mãe' : 'Mãe'; } catch { return 'Mãe'; }
   });
   const [myEmoji] = useState(() => avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)]);
 
-  // Scroll only the chat container, never the whole page
-  useEffect(() => {
-    const el = chatContainerRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [roseMessages]);
+  const handleBubbleRef = useCallback((id: any, el: HTMLDivElement | null) => {
+    if (el) bubbleRefsMap.current.set(id, el);
+    else bubbleRefsMap.current.delete(id);
+  }, []);
 
-  // Simulated participants join after entering
-  useEffect(() => {
-    if (!hasJoinedLive) return;
-    const names: [string, string][] = [['Carla','🌸'],['Bianca','🌺'],['Fernanda','🦋'],['Juliana','🌙'],['Renata','💜']];
-    let i = 0;
-    const id = setInterval(() => {
-      if (i >= names.length) { clearInterval(id); return; }
-      const [name, emoji] = names[i++];
-      setParticipants(prev => [...prev, { id: Date.now() + i, name, emoji, speaking: false }]);
-    }, 3500);
-    return () => clearInterval(id);
-  }, [hasJoinedLive]);
-
-  // Audio analyser to detect speaking
+  /* ── Mic analyser ── */
   const startMicAnalyser = (stream: MediaStream) => {
     try {
       const ctx = new AudioContext();
       const src = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
+      analyser.fftSize = 256;
       src.connect(analyser);
       analyserRef.current = analyser;
-
       const data = new Uint8Array(analyser.frequencyBinCount);
       const tick = () => {
         analyser.getByteFrequencyData(data);
         const avg = data.reduce((s, v) => s + v, 0) / data.length;
-        const isSpeaking = avg > 12;
+        setMicLevel(avg);
+        const isSpeaking = avg > 10;
         setParticipants(prev => prev.map(p => p.isMe ? { ...p, speaking: isSpeaking } : p));
         animFrameRef.current = requestAnimationFrame(tick);
       };
@@ -251,7 +273,7 @@ const RadioDasMaes = () => {
       setHasJoinedLive(true);
       toast.success('🎙️ Microfone ativo! Bem-vinda à Sala de Apoio!');
     } catch (err: any) {
-      console.error(err);
+      console.error('Mic error:', err);
       toast.error('Não foi possível acessar o microfone. Verifique as permissões do navegador.');
     }
     setIsJoiningLive(false);
@@ -262,38 +284,86 @@ const RadioDasMaes = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
     setMicActive(false);
+    setMicLevel(0);
     setHasJoinedLive(false);
     setParticipants([]);
     setRoseMessages([]);
     setViewportPetals([]);
+    setRocket(null);
     toast.success('Você saiu da sala. Até logo! 🌸');
   };
 
-  // Fire petals across the viewport from the position of the exploding message
-  const handleExplode = useCallback((x: number, y: number) => {
-    const newPetals = Array.from({ length: 18 }, (_, i) => ({ id: Date.now() + i, startX: x, startY: y }));
-    setViewportPetals(prev => [...prev, ...newPetals]);
+  /* ── Spawn petals spread across whole screen ── */
+  const spawnPetals = useCallback((originX: number, originY: number, count = 22, emoji = '🌸') => {
+    const petals = Array.from({ length: count }, (_, i) => ({
+      id: Date.now() + i + Math.random() * 1000,
+      startX: originX + (Math.random() - 0.5) * 80,
+      startY: originY + (Math.random() - 0.5) * 40,
+      emoji,
+    }));
+    setViewportPetals(prev => [...prev, ...petals]);
   }, []);
 
   const removePetal = useCallback((id: number) => {
     setViewportPetals(prev => prev.filter(p => p.id !== id));
   }, []);
 
+  /* ── Send rose message — random position on stage ── */
   const handleSendRose = () => {
     if (!chatInput.trim()) return;
-    const newMsg = { id: Date.now(), name: myName, emoji: myEmoji, avatar: myEmoji, text: chatInput.trim() };
-    setRoseMessages(prev => [...prev, newMsg]);
+    setRoseMessages(prev => [...prev, {
+      id: Date.now(), name: myName, emoji: myEmoji, avatar: myEmoji, text: chatInput.trim()
+    }]);
     setChatInput('');
-    // also trigger a small burst from bottom-center immediately for feedback
-    setViewportPetals(prev => [
-      ...prev,
-      ...Array.from({ length: 10 }, (_, i) => ({ id: Date.now() + 100 + i, startX: window.innerWidth / 2, startY: window.innerHeight - 100 }))
-    ]);
+    // Burst from center-bottom of screen
+    spawnPetals(window.innerWidth * 0.5, window.innerHeight * 0.75, 20, '🌸');
   };
 
   const removeRoseMessage = useCallback((id: number) => {
     setRoseMessages(prev => prev.filter(m => m.id !== id));
   }, []);
+
+  const handleRoseExplode = useCallback((x: number, y: number) => {
+    spawnPetals(x, y, 28, '🌸');
+  }, [spawnPetals]);
+
+  /* ── Rocket launch ── */
+  const handleFireRocket = () => {
+    if (!rocketBtnRef.current) return;
+    // Target: random participant that is not self, or self if alone
+    const targets = participants.filter(p => !p.isMe);
+    const target = targets.length > 0
+      ? targets[Math.floor(Math.random() * targets.length)]
+      : participants[0];
+    if (!target) return;
+
+    const btnRect = rocketBtnRef.current.getBoundingClientRect();
+    const fromX = btnRect.left + btnRect.width / 2;
+    const fromY = btnRect.top + btnRect.height / 2;
+
+    // Find target DOM element
+    const targetEl = bubbleRefsMap.current.get(target.id);
+    if (!targetEl) return;
+    const toRect = targetEl.getBoundingClientRect();
+    const toX = toRect.left + toRect.width / 2;
+    const toY = toRect.top + toRect.height / 2;
+
+    setRocket({ fromX, fromY, toX, toY });
+    toast.info('🚀 Foguete lançado!');
+  };
+
+  const handleRocketHit = () => {
+    if (!rocket) return;
+    const targets = participants.filter(p => !p.isMe);
+    const target = targets.length > 0 ? targets[Math.floor(Math.random() * targets.length)] : participants[0];
+    if (target) {
+      setHitParticipantId(target.id);
+      setTimeout(() => setHitParticipantId(null), 800);
+    }
+    spawnPetals(rocket.toX, rocket.toY, 16, '💥');
+    setRocket(null);
+    toast.success('💥 Atingiu!');
+  };
 
   /* ── Recorder ── */
   const [isRecording, setIsRecording] = useState(false);
@@ -323,7 +393,7 @@ const RadioDasMaes = () => {
       mediaRecorderRef.current.onstop = () => { setAudioBlob(new Blob(chunksRef.current, { type: 'audio/webm' })); stream.getTracks().forEach(t => t.stop()); };
       mediaRecorderRef.current.start();
       setIsRecording(true);
-      toast.info('Microfone ativado. Pode falar!');
+      toast.info('Microfone ativado!');
     } catch { toast.error('Não foi possível acessar o microfone.'); }
   };
 
@@ -339,7 +409,7 @@ const RadioDasMaes = () => {
     reader.onloadend = async () => {
       const newD = { id: Date.now(), author: myName || 'Você', city: 'Seguro', content: 'Desabafo em áudio', likes: 0, time: 'Agora mesmo', duration: formatTime(recordingTime), isNew: true, audioData: reader.result as string, isUserAuthor: true };
       try { await saveDesabafoToDB(newD); setDesabafos([newD, ...desabafos]); setIsUploading(false); setAudioBlob(null); toast.success('Seu desabafo foi postado!'); }
-      catch { setIsUploading(false); toast.error('Erro ao salvar! Áudio muito grande.'); }
+      catch { setIsUploading(false); toast.error('Erro ao salvar!'); }
     };
   };
 
@@ -372,14 +442,26 @@ const RadioDasMaes = () => {
   return (
     <div className="max-w-6xl mx-auto pb-12">
 
-      {/* ── Global viewport petals overlay ── */}
+      {/* ── Viewport petals ── */}
       <AnimatePresence>
         {viewportPetals.map(p => (
-          <ViewportPetal key={p.id} id={p.id} startX={p.startX} startY={p.startY} onDone={() => removePetal(p.id)} />
+          <ViewportPetal key={p.id} id={p.id} startX={p.startX} startY={p.startY} emoji={p.emoji} onDone={() => removePetal(p.id)} />
         ))}
       </AnimatePresence>
 
-      {/* Header */}
+      {/* ── Rocket in flight ── */}
+      <AnimatePresence>
+        {rocket && (
+          <RocketProjectile
+            key="rocket"
+            fromX={rocket.fromX} fromY={rocket.fromY}
+            toX={rocket.toX} toY={rocket.toY}
+            onHit={handleRocketHit}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Header tabs */}
       <div className="bg-white/65 shadow-xl backdrop-blur-[12px] rounded-[2.5rem] border border-white/60 p-6 mb-6 relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
           <div>
@@ -401,126 +483,126 @@ const RadioDasMaes = () => {
 
       <AnimatePresence mode="wait">
         {activeTab === 'podcast' ? (
-          <motion.div key="podcast" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}>
+          <motion.div key="podcast" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }}>
 
-            {/* ══ IMMERSIVE LIVE ROOM ══ */}
-            <div className="bg-[#0f0610] rounded-[2.5rem] overflow-hidden shadow-2xl border border-[var(--rosa-forte)]/20 relative" style={{ minHeight: hasJoinedLive ? 680 : 420 }}>
+            {/* ══ LIVE ROOM ══ */}
+            <div className="bg-[#0f0610] rounded-[2.5rem] overflow-hidden shadow-2xl border border-[var(--rosa-forte)]/20 relative">
 
               {/* Top bar */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-30">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
-                  <motion.span
-                    animate={{ opacity: [1, 0.4, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.2 }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 rounded-full text-[10px] font-black text-white"
-                  >
+                  <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1.2 }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 rounded-full text-[10px] font-black text-white">
                     <Radio size={11} /> AO VIVO
                   </motion.span>
-                  <span className="text-white/70 font-serif italic text-base">Sala de Apoio</span>
+                  <span className="text-white/60 font-serif italic text-base">Sala de Apoio</span>
                 </div>
                 {hasJoinedLive && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     {micActive && (
-                      <span className="flex items-center gap-1.5 text-[10px] font-black text-green-400 uppercase tracking-widest">
-                        <motion.span animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2 h-2 rounded-full bg-green-400 inline-block" />
-                        MIC ON
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <motion.span animate={{ scale: [1, 1.5, 1] }} transition={{ repeat: Infinity, duration: 0.7 }}
+                          className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+                        {/* Mini mic level bars */}
+                        <div className="flex items-end gap-px h-4">
+                          {[0.3, 0.6, 1, 0.7, 0.4].map((base, i) => (
+                            <motion.div key={i}
+                              animate={{ height: [`${base * 4 + 2}px`, `${Math.min(base * (micLevel / 15 + 1), 14)}px`, `${base * 4 + 2}px`] }}
+                              transition={{ duration: 0.2, repeat: Infinity }}
+                              className="w-1 bg-green-400 rounded-full"
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10px] font-black text-green-400 uppercase">MIC</span>
+                      </div>
                     )}
-                    <span className="text-[10px] font-black text-white/30 uppercase">{participants.length} na sala</span>
+                    <span className="text-[10px] text-white/30 font-black uppercase">{participants.length} na sala</span>
                   </div>
                 )}
               </div>
 
               {/* Stage */}
-              <div className={`relative w-full transition-all duration-700 ${hasJoinedLive ? 'h-80 md:h-96' : 'h-64'} bg-gradient-to-b from-[#1a0b14] via-[#110810] to-[#060308] overflow-hidden`}>
-
-                {/* Ambient radial glow */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1], opacity: [0.08, 0.15, 0.08] }}
-                    transition={{ duration: 5, repeat: Infinity }}
-                    className="absolute w-96 h-96 rounded-full -translate-x-1/2 -translate-y-1/2"
-                    style={{ left: '50%', top: '50%', background: 'radial-gradient(circle, rgba(236,72,153,0.3), transparent 70%)' }}
+              <div ref={stageRef} className={`relative w-full overflow-hidden transition-all duration-700 ${hasJoinedLive ? 'h-96' : 'h-64'} bg-gradient-to-b from-[#1a0b14] via-[#100810] to-[#060308]`}>
+                {/* Ambient glow - reacts to mic level */}
+                <motion.div
+                  animate={{ opacity: hasJoinedLive ? 0.15 + (micLevel / 255) * 0.4 : 0.08, scale: 1 + (micLevel / 255) * 0.3 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute w-full h-full pointer-events-none"
+                  style={{ background: 'radial-gradient(ellipse at 50% 60%, rgba(236,72,153,0.35), transparent 65%)' }}
+                />
+                {/* Subtle starfield */}
+                {[...Array(18)].map((_, i) => (
+                  <motion.div key={i}
+                    animate={{ opacity: [0.15, 0.6, 0.15] }}
+                    transition={{ duration: 2 + i * 0.3, repeat: Infinity, delay: i * 0.2 }}
+                    className="absolute w-1 h-1 rounded-full bg-white/40"
+                    style={{ left: `${(i * 17 + 5) % 94}%`, top: `${(i * 23 + 10) % 80}%` }}
                   />
-                </div>
-                {/* Pulse rings */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  {[1,2,3].map(i => (
-                    <motion.div key={i}
-                      animate={{ scale: [0.9, 1.3, 0.9], opacity: [0.06, 0, 0.06] }}
-                      transition={{ duration: 4 + i, repeat: Infinity, delay: i * 1.2 }}
-                      className="absolute rounded-full border border-pink-400/20"
-                      style={{ width: 80 + i * 60, height: 80 + i * 60 }}
-                    />
-                  ))}
-                </div>
+                ))}
 
                 {!hasJoinedLive ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                    <motion.span animate={{ scale: [1, 1.12, 1] }} transition={{ repeat: Infinity, duration: 2.2 }} className="text-6xl drop-shadow-2xl">🎙️</motion.span>
-                    <p className="text-white/30 text-xs font-bold tracking-[0.3em] uppercase text-center px-12 leading-loose">
-                      Entre na sala de voz<br/>para encontrar outras mães
-                    </p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
+                    <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2.5 }} className="text-6xl">🎙️</motion.span>
+                    <p className="text-white/25 text-xs font-bold tracking-[0.25em] uppercase text-center">Entre na sala e convide outras mães</p>
                   </div>
                 ) : (
-                  <AnimatePresence>
-                    {participants.map((p, i) => (
-                      <FloatingBubble key={p.id} participant={p} index={i} total={participants.length} />
-                    ))}
-                  </AnimatePresence>
+                  <>
+                    {/* Floating participant bubbles */}
+                    <AnimatePresence>
+                      {participants.map((p, i) => (
+                        <FloatingBubble
+                          key={p.id} participant={p} index={i} total={participants.length}
+                          isHit={hitParticipantId === p.id}
+                          onBubbleRef={handleBubbleRef}
+                        />
+                      ))}
+                    </AnimatePresence>
+
+                    {/* Floating rose cards — randomly spread across stage */}
+                    <AnimatePresence>
+                      {roseMessages.map(msg => (
+                        <FloatingRoseCard
+                          key={msg.id} msg={msg}
+                          stageW={stageRef.current?.clientWidth ?? 400}
+                          stageH={stageRef.current?.clientHeight ?? 380}
+                          onExpire={() => removeRoseMessage(msg.id)}
+                          onExplode={handleRoseExplode}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </>
                 )}
               </div>
 
-              {/* ── Rose Chat overlay (visible only when joined) ── */}
+              {/* Input bar (visible when joined) */}
               <AnimatePresence>
                 {hasJoinedLive && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="relative border-t border-white/5"
+                    className="px-5 py-4 bg-black/35 border-t border-white/5 flex items-center gap-3"
                   >
-                    {/* Messages feed — ref scroll, no page jump */}
-                    <div ref={chatContainerRef} className="h-56 overflow-y-auto px-5 pt-5 pb-2 space-y-1 bg-gradient-to-b from-[#130a10] to-[#0a0609]">
-                      {roseMessages.length === 0 ? (
-                        <div className="h-full flex items-center justify-center">
-                          <p className="text-white/20 text-xs font-bold italic text-center">
-                            Envie uma rosa 🌹 — ela explodirá em pétalas pela tela
-                          </p>
-                        </div>
-                      ) : (
-                        <AnimatePresence mode="popLayout">
-                          {roseMessages.map(msg => (
-                            <RoseMessage
-                              key={msg.id}
-                              msg={msg}
-                              onExpire={() => removeRoseMessage(msg.id)}
-                              onExplode={handleExplode}
-                            />
-                          ))}
-                        </AnimatePresence>
-                      )}
-                    </div>
-
-                    {/* Input bar */}
-                    <div className="px-5 py-4 bg-black/30 border-t border-white/5 flex items-center gap-3">
-                      <span className="text-xl shrink-0">🌹</span>
-                      <input
-                        value={chatInput}
-                        onChange={e => setChatInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleSendRose()}
-                        maxLength={120}
-                        placeholder="Escreva uma mensagem de rosa..."
-                        className="flex-1 bg-white/10 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white/90 font-medium placeholder:text-white/20 outline-none focus:bg-white/15 focus:border-pink-500/40 transition-all"
-                      />
-                      <button
-                        onClick={handleSendRose}
-                        disabled={!chatInput.trim()}
-                        className="w-11 h-11 rounded-2xl bg-[var(--rosa-forte)] text-white flex items-center justify-center disabled:opacity-30 hover:scale-110 active:scale-90 transition-all shadow-lg shadow-pink-500/30"
-                      >
-                        <Send size={16} />
-                      </button>
-                    </div>
+                    <span className="text-xl shrink-0">🌹</span>
+                    <input
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSendRose()}
+                      maxLength={100}
+                      placeholder="Envie uma mensagem de rosa para a sala..."
+                      className="flex-1 bg-white/8 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white/90 placeholder:text-white/20 outline-none focus:bg-white/12 focus:border-pink-500/40 transition-all"
+                    />
+                    {/* 🌹 Send rose */}
+                    <button onClick={handleSendRose} disabled={!chatInput.trim()}
+                      className="w-11 h-11 rounded-2xl bg-[var(--rosa-forte)] text-white flex items-center justify-center disabled:opacity-25 hover:scale-110 active:scale-90 transition-all shadow-lg shadow-pink-600/30">
+                      <Send size={16} />
+                    </button>
+                    {/* 🚀 Rocket */}
+                    <button ref={rocketBtnRef} onClick={handleFireRocket} disabled={participants.length === 0}
+                      title="Lançar foguete em alguém!"
+                      className="w-11 h-11 rounded-2xl bg-orange-500/80 text-white flex items-center justify-center hover:scale-110 active:scale-90 transition-all shadow-lg shadow-orange-500/30 text-xl disabled:opacity-25">
+                      🚀
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -528,37 +610,41 @@ const RadioDasMaes = () => {
               {/* Control footer */}
               <div className="flex items-center justify-between px-6 py-5 bg-black/40 border-t border-white/5">
                 {hasJoinedLive ? (
-                  <button onClick={handleLeaveLiveRoom} className="flex items-center gap-2 px-6 py-3 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all border border-red-500/20 hover:border-red-500">
+                  <button onClick={handleLeaveLiveRoom}
+                    className="flex items-center gap-2 px-6 py-3 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all border border-red-500/20">
                     <PhoneOff size={16} /> Sair da Chamada
                   </button>
                 ) : (
-                  <button onClick={handleJoinLiveRoom} disabled={isJoiningLive} className="flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-[var(--rosa-forte)] to-rose-700 text-white font-black rounded-2xl text-sm uppercase tracking-widest shadow-2xl shadow-pink-700/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                  <button onClick={handleJoinLiveRoom} disabled={isJoiningLive}
+                    className="flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-[var(--rosa-forte)] to-rose-700 text-white font-black rounded-2xl text-sm uppercase tracking-widest shadow-2xl shadow-pink-700/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
                     {isJoiningLive ? <Loader2 size={20} className="animate-spin" /> : <PhoneCall size={20} />}
                     {isJoiningLive ? 'Conectando...' : 'Entrar em Chamada'}
                   </button>
                 )}
-                <div className="text-[10px] text-white/20 font-bold italic flex items-center gap-1.5">
-                  {micActive ? <><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" /> microfone ativo</> : '🎙️ voz apenas'}
+                <div className="text-[10px] text-white/20 font-bold italic">
+                  {hasJoinedLive ? '🌹 rose chat · 🚀 foguete' : '🎙️ voz apenas · sem câmera'}
                 </div>
               </div>
             </div>
 
-            {/* How it works card (below when not joined) */}
+            {/* How it works */}
             {!hasJoinedLive && (
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-6 bg-gradient-to-br from-[#1A0B10] to-[#2d0a1a] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--rosa-forte)]/15">
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
+                className="mt-6 bg-gradient-to-br from-[#1A0B10] to-[#2d0a1a] rounded-[2.5rem] p-7 shadow-2xl border border-[var(--rosa-forte)]/15">
                 <h3 className="text-white font-serif italic text-xl mb-5 flex items-center gap-3">🌸 Como funciona a Sala</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {[
-                    { icon: '🎙️', title: 'Chamada de Voz', desc: 'Microfone ativado direto pelo navegador, sem instalação. Sua bolhinha pulsa quando você fala.' },
-                    { icon: '🫧', title: 'Bolhas Flutuantes', desc: 'Cada mãe que entra ganha uma bolhinha animada. A sala fica viva conforme mais mães chegam.' },
-                    { icon: '🌹', title: 'Chat de Rosas', desc: 'Mensagens surgem como rosas. Toque nelas para explodirem em pétalas pela tela toda.' },
-                    { icon: '🔒', title: 'Espaço Seguro', desc: 'Exclusivo para mães da comunidade. Sem câmera obrigatória.' },
+                    { icon: '🎙️', title: 'Voz Real', desc: 'Microfone capturado pelo navegador. Sua bolha pulsa quando você fala.' },
+                    { icon: '🌹', title: 'Rosas Flutuantes', desc: 'Mensagens surgem espalhadas pela sala. Toque em uma rosa para explodir em pétalas pela tela.' },
+                    { icon: '🚀', title: 'Foguete Maluco', desc: 'Clique no 🚀 para lançar um foguete que colide com a bolha de outra mãe! Ela treme e explode.' },
+                    { icon: '✨', title: 'Ambiente Vivo', desc: 'O brilho da sala pulsa com sua voz. Estrelas decorativas preenchem o fundo. Cada sessão é única.' },
                   ].map((item, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.07 }} className="flex gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <span className="text-2xl shrink-0 mt-0.5">{item.icon}</span>
+                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 + i * 0.07 }}
+                      className="flex gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <span className="text-xl shrink-0 mt-0.5">{item.icon}</span>
                       <div>
-                        <div className="text-white font-black text-sm mb-1">{item.title}</div>
-                        <div className="text-white/40 text-xs font-medium leading-relaxed">{item.desc}</div>
+                        <div className="text-white font-black text-sm mb-0.5">{item.title}</div>
+                        <div className="text-white/40 text-xs leading-relaxed">{item.desc}</div>
                       </div>
                     </motion.div>
                   ))}
@@ -569,32 +655,32 @@ const RadioDasMaes = () => {
           </motion.div>
         ) : (
           /* ══ DESABAFOS TAB ══ */
-          <motion.div key="desabafos" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Recorder */}
+          <motion.div key="desabafos" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }}
+            className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-5">
               <div className="bg-white/80 shadow-2xl backdrop-blur-md rounded-[2.5rem] border-2 border-[var(--rosa-forte)]/20 p-8 sticky top-24">
-                <div className="text-center mb-8">
+                <div className="text-center mb-7">
                   <div className="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mx-auto mb-5">
                     <Mic className="text-[var(--rosa-forte)]" size={32} />
                   </div>
                   <h2 className="text-2xl font-black text-[var(--texto-escuro)] mb-2 italic">Seu Desabafo Real</h2>
                   <p className="text-[var(--texto-medio)] font-medium text-sm">Gravando diretamente do seu microfone.</p>
                 </div>
-                <div className="bg-[#4B1528] rounded-3xl p-8 mb-6 relative flex items-center justify-center min-h-[180px] overflow-hidden">
+                <div className="bg-[#4B1528] rounded-3xl p-8 mb-6 relative flex items-center justify-center min-h-[160px] overflow-hidden">
                   {isRecording ? (
                     <div className="flex items-center gap-1.5 h-12">
                       {[...Array(14)].map((_, i) => (
-                        <motion.div key={i} animate={{ height: [8, Math.random() * 48 + 8, 8] }} transition={{ duration: 0.35, repeat: Infinity, delay: i * 0.04 }} className="w-1.5 bg-[var(--rosa-claro)] rounded-full" />
+                        <motion.div key={i} animate={{ height: [8, Math.random() * 44 + 8, 8] }} transition={{ duration: 0.35, repeat: Infinity, delay: i * 0.04 }} className="w-1.5 bg-[var(--rosa-claro)] rounded-full" />
                       ))}
                     </div>
                   ) : audioBlob ? (
                     <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-white text-center">
                       <Volume2 size={44} className="mx-auto mb-3 text-green-400" />
-                      <span className="font-black text-base">Áudio Capturado</span>
+                      <span className="font-black">Áudio Capturado</span>
                       <p className="text-[10px] opacity-50 mt-1">Pronto para postar</p>
                     </motion.div>
                   ) : (
-                    <div className="text-white/20 font-black text-xs uppercase tracking-[0.3em]">Microfone Pronto</div>
+                    <div className="text-white/20 font-black text-xs uppercase tracking-[0.25em]">Microfone Pronto</div>
                   )}
                   {isRecording && (
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-1.5 bg-red-500 rounded-full text-white text-[10px] font-black uppercase animate-pulse">
@@ -624,7 +710,6 @@ const RadioDasMaes = () => {
               </div>
             </div>
 
-            {/* Feed */}
             <div className="lg:col-span-7 space-y-5">
               <div className="p-6 bg-gradient-to-r from-[var(--rosa-forte)] to-[var(--rosa-medio)] rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
                 <div className="relative z-10">
@@ -633,13 +718,13 @@ const RadioDasMaes = () => {
                 </div>
                 <Radio className="absolute -right-8 -bottom-8 size-36 opacity-10 rotate-12" />
               </div>
-
               {desabafos.length === 0 ? (
                 <div className="text-center p-10 bg-white/50 rounded-[2rem] border border-white/50 text-[var(--texto-medio)] font-bold">
-                  Nenhum desabafo ainda. Seja a primeira a compartilhar sua voz!
+                  Nenhum desabafo ainda. Seja a primeira a compartilhar!
                 </div>
               ) : desabafos.map(d => (
-                <motion.div key={d.id} layout initial={d.isNew ? { opacity: 0, scale: 0.9, y: -20 } : false} animate={{ opacity: 1, scale: 1, y: 0 }} className={`bg-white/90 shadow-xl rounded-[2rem] border p-5 hover:shadow-2xl transition-all ${d.isNew ? 'border-[var(--rosa-forte)]/40 ring-2 ring-[var(--rosa-forte)]/10' : 'border-white'}`}>
+                <motion.div key={d.id} layout initial={d.isNew ? { opacity: 0, scale: 0.9, y: -20 } : false} animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className={`bg-white/90 shadow-xl rounded-[2rem] border p-5 hover:shadow-2xl transition-all ${d.isNew ? 'border-[var(--rosa-forte)]/40 ring-2 ring-[var(--rosa-forte)]/10' : 'border-white'}`}>
                   <div className="flex gap-4 items-start mb-4">
                     <div className="w-11 h-11 rounded-full bg-pink-100 flex items-center justify-center font-black text-[var(--rosa-forte)] border-2 border-white shadow-sm shrink-0">{d.author[0]}</div>
                     <div>
@@ -650,8 +735,8 @@ const RadioDasMaes = () => {
                   <div onClick={() => handlePlayFeedAudio(d)} className={`bg-[var(--ativo-bg)] rounded-2xl p-3 flex items-center gap-3 cursor-pointer mb-4 transition-colors ${playingFeedId === d.id ? 'bg-pink-100 ring-2 ring-[var(--rosa-forte)]/50' : 'hover:bg-pink-50'}`}>
                     <button className={`w-10 h-10 ${playingFeedId === d.id ? 'bg-white text-[var(--rosa-forte)]' : 'bg-[var(--rosa-forte)] text-white'} rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform shrink-0`}>
                       {playingFeedId === d.id
-                        ? <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                        : <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
+                        ? <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                        : <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
                     </button>
                     <div className="flex-1">
                       <div className="h-1 bg-white/60 rounded-full overflow-hidden">
@@ -665,15 +750,15 @@ const RadioDasMaes = () => {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleApoiar(d.id)} className={`flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-black transition-all active:scale-95 ${d.hasLiked ? 'bg-[var(--rosa-forte)] text-white border-[var(--rosa-forte)]' : 'bg-white border-pink-100 text-[var(--rosa-forte)] hover:bg-pink-50'}`}>
-                      <Heart size={15} fill={d.hasLiked ? 'currentColor' : 'none'} /> {d.hasLiked ? 'APOIADA' : 'APOIAR'} {d.likes > 0 && `(${d.likes})`}
+                      <Heart size={14} fill={d.hasLiked ? 'currentColor' : 'none'} /> {d.hasLiked ? 'APOIADA' : 'APOIAR'} {d.likes > 0 && `(${d.likes})`}
                     </button>
                     {d.isUserAuthor ? (
                       <button onClick={() => handleDeleteDesabafo(d.id)} className="flex-1 py-3 rounded-xl bg-white border border-red-100 flex items-center justify-center gap-2 text-xs font-black text-red-500 hover:bg-red-50 transition-all active:scale-95">
-                        <Trash2 size={15} /> EXCLUIR
+                        <Trash2 size={14} /> EXCLUIR
                       </button>
                     ) : (
                       <button onClick={() => toast.success('Link copiado!')} className="flex-1 py-3 rounded-xl bg-white border border-pink-100 flex items-center justify-center gap-2 text-xs font-black text-[var(--texto-claro)] hover:bg-gray-50 transition-all active:scale-95">
-                        <Share2 size={15} /> ENVIAR
+                        <Share2 size={14} /> ENVIAR
                       </button>
                     )}
                   </div>
