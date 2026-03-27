@@ -105,9 +105,10 @@ const SidebarContent = () => {
           </div>
           <div className="overflow-hidden">
             <div className="font-bold text-[var(--texto-escuro)] text-sm truncate">
-               {user?.full_name || "Mãe Atípica"}
+               {localProfile.nomeEmpreendedora || user?.full_name || "Mãe Atípica"}
             </div>
-            <div className={`text-[10px] font-bold uppercase tracking-tighter ${localProfile.isEmpreendedora ? 'text-amber-500' : 'text-[var(--rosa-forte)]/70'}`}>
+            <div className={`text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1 ${localProfile.isEmpreendedora ? 'text-amber-500' : 'text-[var(--rosa-forte)]/70'}`}>
+              {localProfile.isEmpreendedora && <span>👑</span>}
               {localProfile.isEmpreendedora ? 'Empreendedora' : 'Nível de Suporte 2'}
             </div>
           </div>
@@ -224,7 +225,15 @@ const SidebarContent = () => {
                <X size={16} />
             </button>
             
-            <h3 className="text-xl font-black text-gray-900 mb-6 font-serif">Seu <span className="text-pink-500 italic">Perfil</span></h3>
+            <div className="flex items-center justify-between mb-6">
+               <h3 className="text-xl font-black text-gray-900 font-serif m-0">Seu <span className="text-pink-500 italic">Perfil</span></h3>
+               {editProfile.isEmpreendedora && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full shadow-sm">
+                     <span className="text-sm">👑</span>
+                     <span className="text-[10px] uppercase font-bold text-amber-700 tracking-wider">Empreendedora</span>
+                  </div>
+               )}
+            </div>
 
             <div className="flex flex-col items-center gap-4 mb-6">
               <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-pink-400 to-rose-500 p-1 flex items-center justify-center">
@@ -232,9 +241,6 @@ const SidebarContent = () => {
                    <img src={editProfile.avatarBase64} alt="Avatar" className="w-full h-full object-cover rounded-full border-4 border-white" />
                 ) : (
                    <User size={40} className="text-white" />
-                )}
-                {editProfile.isEmpreendedora && (
-                   <div className="absolute -top-2 -right-2 text-3xl drop-shadow-md animate-pulse">👑</div>
                 )}
                 <label className="absolute bottom-0 right-0 w-8 h-8 bg-white text-pink-600 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform border border-pink-100">
                    <Camera size={14} />
