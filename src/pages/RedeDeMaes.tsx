@@ -176,13 +176,6 @@ const RedeDeMaes = () => {
               Compartilhe experiências, tire dúvidas e conecte-se com mulheres que trilham a mesma jornada.
             </p>
           </div>
-          <button 
-            className="px-8 py-4 bg-[var(--rosa-forte)] text-white rounded-2xl font-bold shadow-lg shadow-[var(--rosa-forte)]/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-            onClick={() => {/* Abrir Modal de Post */}}
-          >
-            <Plus size={24} strokeWidth={3} />
-            Nova Publicação
-          </button>
         </div>
       </div>
 
