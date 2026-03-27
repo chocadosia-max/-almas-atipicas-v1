@@ -208,7 +208,7 @@ const MomentoPausa = () => {
   const balloonScale = 0.5 + Math.min(ventText.length / 50, 1.5);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden font-sans bg-[#4B1528]">
+    <div className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden font-sans bg-[#4B1528]">
       
       {/* BACKGROUND ZEN */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -286,32 +286,32 @@ const MomentoPausa = () => {
 
             {mode === 'desabafo' && (
               <motion.div key="desabafo" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center w-full">
-                <div className="relative h-64 md:h-80 w-full flex items-center justify-center mb-8">
+                <div className="relative h-48 md:h-56 w-full flex items-center justify-center mb-6 mt-4">
                   <AnimatePresence>{isExploding && <motion.div initial={{ scale: 1, opacity: 1 }} animate={{ scale: 10, opacity: 0 }} className="absolute w-32 h-32 bg-white rounded-full blur-3xl z-30" />}</AnimatePresence>
                   <AnimatePresence>
                     {!isExploding && (
-                      <motion.div animate={{ scale: balloonScale, y: [0, -20, 0] }} transition={{ y: { repeat: Infinity, duration: 4, ease: "easeInOut" } }} className="relative">
-                        <div className="w-36 h-48 bg-gradient-to-br from-red-400 to-red-600 rounded-t-[50%] rounded-b-[40%] shadow-[0_30px_60px_rgba(239,68,68,0.4)] relative">
-                           <div className="absolute top-6 left-6 w-10 h-16 bg-white/25 rounded-full blur-[2px] -rotate-12" />
+                      <motion.div animate={{ scale: balloonScale, y: [0, -15, 0] }} transition={{ y: { repeat: Infinity, duration: 4, ease: "easeInOut" } }} className="relative">
+                        <div className="w-32 h-40 bg-gradient-to-br from-red-400 to-red-600 rounded-t-[50%] rounded-b-[40%] shadow-[0_30px_60px_rgba(239,68,68,0.4)] relative">
+                           <div className="absolute top-5 left-5 w-8 h-12 bg-white/25 rounded-full blur-[2px] -rotate-12" />
                         </div>
-                        <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 w-0.5 h-20 bg-white/30" />
+                        <div className="absolute bottom-[-15px] left-1/2 -translate-x-1/2 w-0.5 h-16 bg-white/30" />
                       </motion.div>
                     )}
                   </AnimatePresence>
                   <AnimatePresence>
                     {showSupport && (
-                      <motion.div initial={{ opacity: 0, scale: 0.8, y: 50 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.8, y: -50 }} className="absolute z-40 bg-white p-10 rounded-[3.5rem] shadow-2xl max-w-sm border border-green-50">
-                         <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-500 mb-6 mx-auto"><Sun size={32} /></div>
-                         <p className="text-[#4B1528] font-black text-xl italic leading-relaxed text-center">{randomSupport}</p>
+                      <motion.div initial={{ opacity: 0, scale: 0.8, y: 50 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.8, y: -50 }} className="absolute z-40 bg-white p-8 rounded-[3rem] shadow-2xl max-w-sm border border-green-50 mx-4">
+                         <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-500 mb-4 mx-auto"><Sun size={24} /></div>
+                         <p className="text-[#4B1528] font-black text-lg italic leading-relaxed text-center">{randomSupport}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
-                <div className="relative w-full max-w-lg bg-white/10 backdrop-blur-2xl rounded-[3rem] border border-white/20 p-6 shadow-2xl transition-all">
-                  <textarea disabled={isExploding} value={ventText} onChange={(e) => setVentText(e.target.value)} className="w-full h-28 bg-transparent text-white placeholder-white/30 text-xl outline-none font-medium italic overflow-hidden resize-none" placeholder="O que está pesando no seu coração? Digite sem medo..." />
-                  <div className="flex justify-between items-center mt-4 border-t border-white/10 pt-4">
+                <div className="relative w-full max-w-lg bg-white/10 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 p-5 shadow-2xl transition-all">
+                  <textarea disabled={isExploding} value={ventText} onChange={(e) => setVentText(e.target.value)} className="w-full h-16 bg-transparent text-white placeholder-white/30 text-lg outline-none font-medium italic overflow-hidden resize-none" placeholder="O que está pesando no seu coração? Digite sem medo..." />
+                  <div className="flex justify-between items-center mt-3 border-t border-white/10 pt-3">
                     <div className="text-[10px] font-black uppercase text-white/40 tracking-[3px]">{ventText.length} tons de peso</div>
-                    <button onClick={handleExplode} disabled={!ventText || isExploding} className="bg-red-500 hover:bg-red-600 text-white font-black px-8 py-3 rounded-2xl shadow-xl disabled:opacity-30 text-xs uppercase tracking-widest transition-all">LIBERAR PESO 💨</button>
+                    <button onClick={handleExplode} disabled={!ventText || isExploding} className="bg-red-500 hover:bg-red-600 text-white font-black px-6 py-2.5 rounded-xl shadow-xl disabled:opacity-30 text-[10px] md:text-xs uppercase tracking-widest transition-all">LIBERAR PESO 💨</button>
                   </div>
                 </div>
               </motion.div>
