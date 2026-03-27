@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Send, Heart, Volume2, MessageCircle,
-  Users, Anchor, Clock, Sparkles, Plus, PlayCircle, LogIn, 
-  Activity, Leaf, Mic, StopCircle, Trash2
+  Users, Anchor, Clock, Sparkles, PlayCircle, LogIn, 
+  Activity, Leaf, StopCircle, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { toast } from "sonner";
@@ -13,6 +13,9 @@ const MAX_BUBBLE_SCALE = 1.4;
 const BASE_BUBBLE_SIZE = 55;
 const avatarEmojis = ['🌸', '🌺', '🌷', '🌻', '🦋', '🌙', '⭐', '🫶', '💜', '🌿', '✨', '💎'];
 const moodEmojis = ['😊', '😴', '🤯', '🫶', '🧘', '☕', '🌟', '🌙', '🫂'];
+
+// Changing the key to v2 automatically clears all the old problematic cards
+const MURAL_STORAGE_KEY = 'social_radio_mural_v2';
 
 /* ─── UI Helpers ─── */
 const Firefly = () => {
@@ -51,7 +54,7 @@ const FloatingBubble = ({ participant, index, total, isSelected, isReceivingHear
 const MuralCard = ({ card, onPlay, onDelete, isMine }: any) => {
     const rotation = useMemo(() => Math.random() * 4 - 2, []);
     return (
-        <motion.div initial={{ scale: 0.9, opacity: 0, rotate: rotation }} animate={{ scale: 1, opacity: 1, rotate: rotation }} whileHover={{ scale: 1.02, rotate: 0, zIndex: 10 }} className="group relative bg-white/90 backdrop-blur-sm p-6 shadow-2xl rounded-[2.5rem] border border-white flex flex-col gap-5 overflow-hidden">
+        <motion.div initial={{ scale: 0.9, opacity: 0, rotate: rotation }} animate={{ scale: 1, opacity: 1, rotate: rotation }} whileHover={{ scale: 1.02, rotate: 0, zIndex: 10 }} className="group relative bg-white/90 backdrop-blur-sm p-6 shadow-2xl rounded-[2.5rem] border border-white flex flex-col gap-5 overflow-hidden h-fit">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-pink-500/10 rounded-full mt-4" />
             
             <div className="flex items-center justify-between relative z-10">
@@ -107,7 +110,7 @@ const MuralCard = ({ card, onPlay, onDelete, isMine }: any) => {
 const RadioDasMaes = () => {
     const [activeTab, setActiveTab] = useState<'chat' | 'mural'>('chat');
     const [desabafos, setDesabafos] = useState<any[]>(() => {
-        try { const saved = localStorage.getItem('social_radio_desabafos'); return saved ? JSON.parse(saved) : []; } catch { return []; }
+        try { const saved = localStorage.getItem(MURAL_STORAGE_KEY); return saved ? JSON.parse(saved) : []; } catch { return []; }
     });
     const [hasJoinedLive, setHasJoinedLive] = useState(false);
     const [participants, setParticipants] = useState<any[]>([]);
@@ -138,7 +141,7 @@ const RadioDasMaes = () => {
     const [myEmoji] = useState(() => avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)]);
 
     useEffect(() => {
-       const saved = localStorage.getItem('social_radio_desabafos');
+       const saved = localStorage.getItem(MURAL_STORAGE_KEY);
        if (saved) setDesabafos(JSON.parse(saved));
     }, []);
 
@@ -205,7 +208,7 @@ const RadioDasMaes = () => {
                         const newDesabafo = { id: Date.now(), author: myName, audioData: base64Audio, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
                         setDesabafos(prev => {
                             const updated = [newDesabafo, ...prev];
-                            localStorage.setItem('social_radio_desabafos', JSON.stringify(updated));
+                            localStorage.setItem(MURAL_STORAGE_KEY, JSON.stringify(updated));
                             return updated;
                         });
                         toast.success('Seu desabafo foi pendurado no mural! 🌸');
@@ -224,7 +227,7 @@ const RadioDasMaes = () => {
     const handleDeleteCard = (cardId: number) => {
         setDesabafos(prev => {
             const updated = prev.filter(c => c.id !== cardId);
-            localStorage.setItem('social_radio_desabafos', JSON.stringify(updated));
+            localStorage.setItem(MURAL_STORAGE_KEY, JSON.stringify(updated));
             return updated;
         });
         toast.success('Registro removido do mural. ✨');
@@ -233,14 +236,14 @@ const RadioDasMaes = () => {
     useEffect(() => { if (chatContainerRef.current) chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight; }, [chatMessages]);
 
     return (
-        <div className="w-full max-w-7xl mx-auto h-[calc(100vh-60px)] flex flex-col p-2 overflow-hidden bg-transparent">
+        <div className="w-full max-w-7xl mx-auto min-h-[calc(100vh-60px)] flex flex-col p-2 pb-12 bg-transparent">
             {/* Particles */}
             <AnimatePresence> {petals.map(id => (
               <motion.div key={id} initial={{ top: '-10%', left: `${Math.random() * 100}%`, opacity: 0 }} animate={{ top: '110%', opacity: [0, 1, 1, 0], rotate: 360 }} transition={{ duration: 7 }} className="fixed pointer-events-none text-2xl z-[101]" onAnimationComplete={() => setPetals(p => p.filter(x => x !== id))}>🌸</motion.div>
             ))} </AnimatePresence>
 
             {/* Header */}
-            <div className="flex items-center justify-between mb-2 bg-white/40 backdrop-blur-2xl p-2 px-6 rounded-[2rem] border border-white/50 shadow-lg shrink-0 z-[100]">
+            <div className="flex items-center justify-between mb-4 bg-white/40 backdrop-blur-2xl p-2 px-6 rounded-[2rem] border border-white/50 shadow-lg shrink-0 z-[100]">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-pink-500/20"><MessageCircle size={18} /></div>
                     <div className="flex flex-col"><span className="text-[8px] font-black text-pink-500 uppercase tracking-tighter leading-none">Comunidade Almas Atípicas</span><h1 className="text-sm font-black text-gray-800 leading-none tracking-tight uppercase">Chat de Acolhimento</h1></div>
@@ -253,7 +256,7 @@ const RadioDasMaes = () => {
 
             <AnimatePresence mode="wait">
                 {activeTab === 'chat' ? (
-                    <motion.div key="chat-stage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col min-h-0 gap-2">
+                    <motion.div key="chat-stage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col min-h-[500px] gap-2">
                          {/* Stage Area */}
                         <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 min-h-[340px] rounded-[3rem] overflow-hidden shadow-2xl border-2 border-white/10 relative bg-black perspective-[1000px]">
                             <div className="absolute inset-0 bg-gradient-radial from-[#1e0a16] via-[#0d040a] to-[#050103] opacity-90" />
@@ -308,7 +311,7 @@ const RadioDasMaes = () => {
                     </motion.div>
                 ) : (
                     /* Mural Section */
-                    <motion.div key="mural-layout" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex-1 overflow-hidden flex flex-col bg-pink-50/30 rounded-[3.5rem] p-8 border border-white relative">
+                    <motion.div key="mural-layout" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="w-full h-fit flex flex-col bg-pink-50/30 rounded-[3.5rem] p-8 border border-white relative">
                         <div className="flex items-center justify-between mb-8"> 
                            <div className="flex flex-col">
                               <h2 className="text-3xl font-black text-gray-900 leading-none tracking-tight">Mural de <span className="text-pink-500">Apoio</span></h2>
@@ -319,8 +322,8 @@ const RadioDasMaes = () => {
                                {isRecording ? 'PARAR E PENDURAR' : 'PENDURAR DESABAFO'}
                            </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto no-scrollbar grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 p-1 pb-10">
-                             {desabafos.length === 0 ? ( <div className="col-span-full h-full flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} isMine={d.author.toLowerCase().trim() === myName.toLowerCase().trim()} card={d} onDelete={handleDeleteCard} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
+                        <div className="w-full h-fit grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                             {desabafos.length === 0 ? ( <div className="col-span-full h-full min-h-[400px] flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} isMine={d.author.toLowerCase().trim() === myName.toLowerCase().trim()} card={d} onDelete={handleDeleteCard} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
                         </div>
                     </motion.div>
                 )}
