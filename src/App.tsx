@@ -39,6 +39,7 @@ import CartaoEmergencia from "./pages/CartaoEmergencia";
 import ParaAFamilia from "./pages/ParaAFamilia";
 import DashboardAdmin from "./pages/DashboardAdmin";
 import TermosDeUso from "./pages/TermosDeUso";
+import AssistenteIA from "./pages/AssistenteIA";
 
 const queryClient = new QueryClient();
 
@@ -161,6 +162,7 @@ function App() {
                 <Route path="/cartao-tea" element={<CartaoEmergencia />} />
                 <Route path="/para-a-familia" element={<ParaAFamilia />} />
                 <Route path="/termos" element={<TermosDeUso />} />
+                <Route path="/assistente" element={<AssistenteIA />} />
                 
                 <Route path="/admin/dashboard" element={<DashboardAdmin />} />
               </Route>

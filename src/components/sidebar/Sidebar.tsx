@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Book, BookOpen, Clock, Coffee, HeartHandshake, Radio, BookMarked, 
-  Scale, Coins, Puzzle, Menu, AlertCircle, User, LogOut, Settings, ChevronRight, Stethoscope
+  Scale, Coins, Puzzle, Menu, AlertCircle, User, LogOut, Settings, ChevronRight, Stethoscope, Sparkles
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +29,7 @@ const NAV_GROUPS: NavGroup[] = [
       { name: "Rotina", path: "/rotina", icon: Clock },
       { name: "Momento Pausa", path: "/pausa", icon: Coffee },
       { name: "Consultas", path: "/consultas", icon: Stethoscope, highlight: false },
+      { name: "Assistente IA", path: "/assistente", icon: Sparkles, highlight: true },
     ],
   },
   {
