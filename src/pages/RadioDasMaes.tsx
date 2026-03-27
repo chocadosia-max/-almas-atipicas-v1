@@ -8,6 +8,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from "sonner";
 
 
+const DB_NAME_RAD = 'AlmasRadioDB';
+const STORE_NAME_RAD = 'desabafos';
+const initRadioDB = () => new Promise<IDBDatabase>((resolve, reject) => {
+  const request = indexedDB.open(DB_NAME_RAD, 1);
+  request.onupgradeneeded = () => request.result.createObjectStore(STORE_NAME_RAD, { keyPath: 'id' });
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error);
+});
+const saveDesabafoToDB = async (item: any) => {
+  const db = await initRadioDB();
+  const tx = db.transaction(STORE_NAME_RAD, 'readwrite');
+  tx.objectStore(STORE_NAME_RAD).put(item);
+  return new Promise((res, rej) => { tx.oncomplete = () => res(undefined); tx.onerror = () => rej(tx.error); });
+};
+const getDesabafosFromDB = async () => {
+  const db = await initRadioDB();
+  const tx = db.transaction(STORE_NAME_RAD, 'readonly');
+  const req = tx.objectStore(STORE_NAME_RAD).getAll();
+  return new Promise<any[]>((res, rej) => { req.onsuccess = () => res(req.result || []); req.onerror = () => rej(req.error); });
+};
+const deleteDesabafoFromDB = async (id: number) => {
+  const db = await initRadioDB();
+  const tx = db.transaction(STORE_NAME_RAD, 'readwrite');
+  tx.objectStore(STORE_NAME_RAD).delete(id);
+  return new Promise((res, rej) => { tx.oncomplete = () => res(undefined); tx.onerror = () => rej(tx.error); });
+};
+
 const RadioDasMaes = () => {
   const [activeTab, setActiveTab] = useState<'podcast' | 'desabafos'>('podcast');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -21,18 +48,26 @@ const RadioDasMaes = () => {
     return [];
   });
 
-  // Community Feed State with LocalStorage Persistence
-  const [desabafos, setDesabafos] = useState<any[]>(() => {
-    const saved = localStorage.getItem('almas_desabafos_2');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return [];
+  // Community Feed State with IndexedDB Persistence
+  const [desabafos, setDesabafos] = useState<any[]>([]);
+
+  useEffect(() => {
+    getDesabafosFromDB().then((data) => {
+      if (data && data.length > 0) {
+        data.sort((a,b) => b.id - a.id);
+        setDesabafos(data);
+      } else {
+        const saved = localStorage.getItem('almas_desabafos_2');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setDesabafos(parsed);
+            parsed.forEach((p:any) => saveDesabafoToDB(p));
+          } catch {}
+        }
       }
-    }
-    return [];
-  });
+    });
+  }, []);
 
   // Audio Playback State for Desabafos
   const [playingFeedId, setPlayingFeedId] = useState<number | null>(null);
@@ -49,7 +84,6 @@ const RadioDasMaes = () => {
   const chunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    localStorage.setItem('almas_desabafos_2', JSON.stringify(desabafos)); 
     localStorage.setItem('almas_podcasts', JSON.stringify(podcasts));
   }, [desabafos, podcasts]);
 
@@ -107,27 +141,31 @@ const RadioDasMaes = () => {
     // Convert Blob to Base64 to persist audio natively
     const reader = new FileReader();
     reader.readAsDataURL(audioBlob);
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const base64Audio = reader.result as string;
-      setTimeout(() => {
-        const newDesabafo = {
-          id: Date.now(),
-          author: "Você (Autora)", 
-          city: "Seguro",
-          content: "Desabafo em áudio",
-          likes: 0,
-          time: "Agora mesmo",
-          duration: formatTime(recordingTime),
-          isNew: true, 
-          audioData: base64Audio,
-          isUserAuthor: true
-        };
+      const newDesabafo = {
+        id: Date.now(),
+        author: "Você (Autora)", 
+        city: "Seguro",
+        content: "Desabafo em áudio",
+        likes: 0,
+        time: "Agora mesmo",
+        duration: formatTime(recordingTime),
+        isNew: true, 
+        audioData: base64Audio,
+        isUserAuthor: true
+      };
 
+      try {
+        await saveDesabafoToDB(newDesabafo);
         setDesabafos([newDesabafo, ...desabafos]);
         setIsUploading(false);
         setAudioBlob(null);
         toast.success("Seu desabafo real foi postado e já está no seu feed!");
-      }, 1500);
+      } catch (err) {
+        setIsUploading(false);
+        toast.error("Erro ao salvar! Áudio muito grande.");
+      }
     };
   };
 
@@ -153,13 +191,35 @@ const RadioDasMaes = () => {
     }
   };
 
-  const handleDeleteDesabafo = (id: number) => {
+  const handleDeleteDesabafo = async (id: number) => {
     if (playingFeedId === id) {
       audioFeedRef.current?.pause();
       setPlayingFeedId(null);
     }
+    await deleteDesabafoFromDB(id);
     setDesabafos(prev => prev.filter(d => d.id !== id));
     toast.success("Áudio deletado com sucesso.");
+  };
+
+  const handleApoiar = async (id: number) => {
+    const updated = desabafos.map(d => {
+      if (d.id === id) {
+        if (d.hasLiked) {
+          toast.info("Você já apoiou esta mãe.");
+          return d;
+        }
+        toast.success("Você enviou um abraço de apoio!", { icon: "🫂" });
+        const novo = { ...d, likes: (d.likes || 0) + 1, hasLiked: true };
+        saveDesabafoToDB(novo);
+        return novo;
+      }
+      return d;
+    });
+    setDesabafos(updated);
+  };
+
+  const handleCompartilhar = () => {
+    toast.success("Link do desabafo copiado para a área de transferência!");
   };
 
   const handleJoinLiveRoom = () => {
@@ -505,8 +565,12 @@ const RadioDasMaes = () => {
                            </div>
                         </div>
                         <div className="md:col-span-4 flex md:flex-col justify-around gap-2">
-                           <button className="flex-1 py-3 px-4 rounded-xl bg-white border border-pink-100 flex items-center justify-center gap-2 text-xs font-black text-[var(--rosa-forte)] hover:bg-pink-50 transition-all active:scale-95">
-                             <Heart size={16} /> APOIAR
+                           <button 
+                             onClick={() => handleApoiar(desabafo.id)}
+                             className={`flex-1 py-3 px-4 rounded-xl border flex items-center justify-center gap-2 text-xs font-black transition-all active:scale-95 ${desabafo.hasLiked ? 'bg-[var(--rosa-forte)] text-white border-[var(--rosa-forte)]' : 'bg-white border-pink-100 text-[var(--rosa-forte)] hover:bg-pink-50'}`}
+                           >
+                             <Heart size={16} fill={desabafo.hasLiked ? "currentColor" : "none"} /> 
+                             {desabafo.hasLiked ? 'APOIADA' : 'APOIAR'} {desabafo.likes > 0 && `(${desabafo.likes})`}
                            </button>
                            {desabafo.isUserAuthor ? (
                               <button 
@@ -516,7 +580,10 @@ const RadioDasMaes = () => {
                                 <Trash2 size={16} /> EXCLUIR
                               </button>
                            ) : (
-                              <button className="flex-1 py-3 px-4 rounded-xl bg-white border border-pink-100 flex items-center justify-center gap-2 text-xs font-black text-[var(--texto-claro)] hover:bg-gray-50 transition-all active:scale-95">
+                              <button 
+                                onClick={handleCompartilhar}
+                                className="flex-1 py-3 px-4 rounded-xl bg-white border border-pink-100 flex items-center justify-center gap-2 text-xs font-black text-[var(--texto-claro)] hover:bg-gray-50 transition-all active:scale-95"
+                              >
                                 <Share2 size={16} /> ENVIAR
                               </button>
                            )}
