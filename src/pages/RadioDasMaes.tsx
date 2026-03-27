@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Headphones, Mic, StopCircle, Send, Trash2, Heart, Share2, Volume2,
-  Loader2, MessageSquarePlus, Users, Radio, Info, PhoneCall, PhoneOff
+  Loader2, MessageSquarePlus, Radio, Info, PhoneCall, PhoneOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from "sonner";
 
-/* ─── IndexedDB helpers ─── */
+/* ─── IndexedDB ─── */
 const DB_NAME_RAD = 'AlmasRadioDB';
 const STORE_NAME_RAD = 'desabafos';
 const initRadioDB = () => new Promise<IDBDatabase>((resolve, reject) => {
@@ -34,105 +34,131 @@ const deleteDesabafoFromDB = async (id: number) => {
   return new Promise((res, rej) => { tx.oncomplete = () => res(undefined); tx.onerror = () => rej(tx.error); });
 };
 
-/* ─── Rose Petal ─── */
-const RosePetal = ({ vx, vy, delay }: { vx: number; vy: number; delay: number }) => (
-  <motion.span
-    initial={{ x: 0, y: 0, opacity: 0.65, scale: 1, rotate: 0 }}
-    animate={{ x: vx, y: vy, opacity: 0, scale: 0.25, rotate: Math.random() * 720 - 360 }}
-    transition={{ duration: 1.5 + Math.random() * 0.5, delay, ease: 'easeOut' }}
-    className="absolute pointer-events-none select-none text-sm"
-  >🌸</motion.span>
-);
-
-/* ─── Rose Message Bubble ─── */
-const RoseMessage = ({ msg, onExpire }: { msg: any; onExpire: () => void }) => {
-  const [exploded, setExploded] = useState(false);
-  const [petals, setPetals] = useState<any[]>([]);
-  const [visible, setVisible] = useState(true);
+/* ─── Viewport Petal (fixed, flies across entire screen) ─── */
+const ViewportPetal = ({ startX, startY, id, onDone }: { startX: number; startY: number; id: number; onDone: () => void }) => {
+  const vx = (Math.random() - 0.5) * 400;
+  const vy = -(Math.random() * 300 + 80);
+  const rotate = Math.random() * 720 - 360;
+  const dur = 1.6 + Math.random() * 0.8;
 
   useEffect(() => {
-    const t = setTimeout(trigger, 120_000);
+    const t = setTimeout(onDone, (dur + 0.3) * 1000);
     return () => clearTimeout(t);
   }, []); // eslint-disable-line
 
-  const trigger = useCallback(() => {
+  return (
+    <motion.span
+      key={id}
+      initial={{ x: startX, y: startY, opacity: 0.85, scale: 1.2, rotate: 0 }}
+      animate={{ x: startX + vx, y: startY + vy, opacity: 0, scale: 0.2, rotate }}
+      transition={{ duration: dur, ease: 'easeOut' }}
+      className="fixed pointer-events-none select-none text-xl z-[9999]"
+      style={{ left: 0, top: 0 }}
+    >🌸</motion.span>
+  );
+};
+
+/* ─── Rose Message — floats on stage overlay ─── */
+const RoseMessage = ({
+  msg, onExpire, onExplode
+}: { msg: any; onExpire: () => void; onExplode: (x: number, y: number) => void }) => {
+  const [exploded, setExploded] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(doExplode, 120_000);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line
+
+  const doExplode = useCallback(() => {
     if (exploded) return;
     setExploded(true);
-    setPetals(Array.from({ length: 14 }, (_, i) => ({
-      id: i,
-      vx: (Math.random() - 0.5) * 220,
-      vy: -(Math.random() * 140 + 40),
-      delay: i * 0.04,
-    })));
-    setTimeout(() => { setVisible(false); onExpire(); }, 1900);
-  }, [exploded, onExpire]);
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      onExplode(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+    setTimeout(() => { setVisible(false); onExpire(); }, 1400);
+  }, [exploded, onExplode, onExpire]);
 
   if (!visible) return null;
 
   return (
     <motion.div
+      ref={ref}
       layout
-      initial={{ scale: 0, opacity: 0, y: 18 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
+      initial={{ scale: 0, opacity: 0, y: 16 }}
+      animate={{ scale: exploded ? 0 : 1, opacity: exploded ? 0 : 1, y: 0 }}
       exit={{ scale: 0, opacity: 0 }}
-      className="relative flex items-end gap-2 mb-3"
+      className="relative flex items-end gap-2 mb-3 group"
+      onClick={doExplode}
     >
-      <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-base shrink-0 shadow border-2 border-white">
+      {/* Avatar bubble */}
+      <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-lg shrink-0 shadow-lg">
         {msg.avatar}
       </div>
-      <div className={`relative max-w-[80%] ${exploded ? 'pointer-events-none' : 'cursor-pointer'}`} onClick={trigger}>
+
+      {/* Message */}
+      <div className={`relative max-w-[75%] cursor-pointer ${exploded ? 'pointer-events-none' : ''}`}>
         {!exploded && (
           <motion.span
-            animate={{ scale: [1, 1.18, 1] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="absolute -top-3 -left-3 text-lg z-10"
+            animate={{ scale: [1, 1.2, 1], rotate: [-5, 5, -5] }}
+            transition={{ repeat: Infinity, duration: 1.8 }}
+            className="absolute -top-4 -left-2 text-xl z-10 drop-shadow-lg"
           >🌹</motion.span>
         )}
-        <div className="bg-white/90 backdrop-blur-md border border-pink-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-lg hover:shadow-pink-200/50 transition-all">
-          <p className="text-[11px] font-black text-pink-600 mb-0.5 uppercase tracking-widest">{msg.name}</p>
-          <p className="text-sm text-[#4B1528] font-medium leading-relaxed">{msg.text}</p>
-          <p className="text-[9px] text-gray-300 font-black mt-1 text-right">toque para libertar 🌸</p>
+        <div className="bg-white/15 backdrop-blur-xl border border-white/25 rounded-2xl rounded-bl-sm px-4 py-3 shadow-xl group-hover:bg-white/25 transition-all">
+          <p className="text-[10px] font-black text-pink-300 mb-0.5 uppercase tracking-widest">{msg.name}</p>
+          <p className="text-sm text-white/90 font-medium leading-relaxed">{msg.text}</p>
+          <p className="text-[9px] text-white/30 font-bold mt-1 text-right">toque para libertar 🌸</p>
         </div>
-        <AnimatePresence>
-          {petals.map(p => <RosePetal key={p.id} vx={p.vx} vy={p.vy} delay={p.delay} />)}
-        </AnimatePresence>
       </div>
     </motion.div>
   );
 };
 
-/* ─── Floating Bubble ─── */
+/* ─── Floating Participant Bubble ─── */
 const avatarEmojis = ['🌸','🌺','🌷','🌻','🦋','🌙','⭐','🫶','💜','🌿'];
-const FloatingBubble = ({ participant, index }: { participant: any; index: number }) => {
-  const angle = (index / 8) * Math.PI * 2;
-  const cx = 50 + Math.cos(angle) * 28;
-  const cy = 50 + Math.sin(angle) * 18;
+
+const FloatingBubble = ({ participant, index, total }: { participant: any; index: number; total: number }) => {
+  // Distribute bubbles evenly in a soft ellipse across the stage
+  const angle = (index / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
+  const rx = 32, ry = 22;
+  const cx = 50 + Math.cos(angle) * rx;
+  const cy = 45 + Math.sin(angle) * ry;
+
   return (
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1, y: [0, -8, 0, 7, 0], x: [0, 3, 0, -3, 0] }}
+      animate={{
+        scale: 1, opacity: 1,
+        y: [0, -10, 0, 8, 0],
+        x: [0, 4, 0, -4, 0],
+      }}
       exit={{ scale: 0, opacity: 0 }}
       transition={{
-        scale: { duration: 0.4 }, opacity: { duration: 0.4 },
-        y: { duration: 4 + index * 0.7, repeat: Infinity, ease: 'easeInOut' },
-        x: { duration: 3.5 + index * 0.5, repeat: Infinity, ease: 'easeInOut' },
+        scale: { type: 'spring', stiffness: 260, damping: 20 },
+        opacity: { duration: 0.35 },
+        y: { duration: 4.5 + index * 0.6, repeat: Infinity, ease: 'easeInOut' },
+        x: { duration: 3.8 + index * 0.45, repeat: Infinity, ease: 'easeInOut' },
       }}
-      className="absolute flex flex-col items-center gap-1"
+      className="absolute flex flex-col items-center gap-1.5"
       style={{ left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)' }}
     >
+      {/* Mic-active pulse ring */}
       {participant.speaking && (
         <motion.div
-          animate={{ scale: [1, 1.7, 1], opacity: [0.5, 0, 0.5] }}
-          transition={{ duration: 1.2, repeat: Infinity }}
-          className="absolute rounded-full bg-[var(--rosa-forte)]/40"
-          style={{ width: 56, height: 56, top: -4, left: -4 }}
+          animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }}
+          transition={{ duration: 1, repeat: Infinity }}
+          className="absolute rounded-full"
+          style={{ width: 70, height: 70, top: -7, left: -7, background: 'radial-gradient(circle, rgba(236,72,153,0.4), transparent 70%)' }}
         />
       )}
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-200 to-rose-300 flex items-center justify-center text-2xl shadow-xl border-4 border-white/80 ring-2 ring-pink-300/30">
+      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-300/80 to-rose-500/60 flex items-center justify-center text-3xl shadow-2xl border-4 border-white/30 backdrop-blur-sm ring-2 ring-pink-400/20">
         {participant.emoji}
       </div>
-      <span className="text-[9px] font-black text-white/80 bg-black/30 backdrop-blur-sm px-2 py-0.5 rounded-full truncate max-w-[60px]">
-        {participant.name}
+      <span className="text-[9px] font-black text-white/80 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full truncate max-w-[70px] shadow-sm">
+        {participant.isMe ? `${participant.name} (você)` : participant.name}
       </span>
     </motion.div>
   );
@@ -160,9 +186,14 @@ const RadioDasMaes = () => {
   const [isJoiningLive, setIsJoiningLive] = useState(false);
   const [participants, setParticipants] = useState<any[]>([]);
   const [roseMessages, setRoseMessages] = useState<any[]>([]);
+  const [viewportPetals, setViewportPetals] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [micActive, setMicActive] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number>(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
   const [myName] = useState(() => {
     try { const p = localStorage.getItem('almas_empreendedora_profile'); return p ? JSON.parse(p).nomeEmpreendedora || 'Mãe' : 'Mãe'; } catch { return 'Mãe'; }
   });
@@ -170,44 +201,90 @@ const RadioDasMaes = () => {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [roseMessages]);
 
-  // Simulate other moms joining
+  // Simulated participants join after entering
   useEffect(() => {
     if (!hasJoinedLive) return;
-    const names: [string, string][] = [['Carla','🌸'],['Bianca','🌺'],['Fernanda','🦋'],['Juliana','🌙']];
+    const names: [string, string][] = [['Carla','🌸'],['Bianca','🌺'],['Fernanda','🦋'],['Juliana','🌙'],['Renata','💜']];
     let i = 0;
     const id = setInterval(() => {
       if (i >= names.length) { clearInterval(id); return; }
       const [name, emoji] = names[i++];
       setParticipants(prev => [...prev, { id: Date.now() + i, name, emoji, speaking: false }]);
-    }, 4000);
+    }, 3500);
     return () => clearInterval(id);
   }, [hasJoinedLive]);
+
+  // Audio analyser to detect speaking
+  const startMicAnalyser = (stream: MediaStream) => {
+    try {
+      const ctx = new AudioContext();
+      const src = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      src.connect(analyser);
+      analyserRef.current = analyser;
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((s, v) => s + v, 0) / data.length;
+        const isSpeaking = avg > 12;
+        setParticipants(prev => prev.map(p => p.isMe ? { ...p, speaking: isSpeaking } : p));
+        animFrameRef.current = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch {}
+  };
 
   const handleJoinLiveRoom = async () => {
     setIsJoiningLive(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       streamRef.current = stream;
+      setMicActive(true);
+      startMicAnalyser(stream);
       setParticipants([{ id: 0, name: myName, emoji: myEmoji, speaking: false, isMe: true }]);
       setHasJoinedLive(true);
-      toast.success('Você entrou na Sala de Apoio 🎙️ Microfone ativo!');
-    } catch { toast.error('Não foi possível acessar o microfone. Verifique as permissões.'); }
+      toast.success('🎙️ Microfone ativo! Bem-vinda à Sala de Apoio!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Não foi possível acessar o microfone. Verifique as permissões do navegador.');
+    }
     setIsJoiningLive(false);
   };
 
   const handleLeaveLiveRoom = () => {
+    cancelAnimationFrame(animFrameRef.current);
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
+    setMicActive(false);
     setHasJoinedLive(false);
     setParticipants([]);
     setRoseMessages([]);
+    setViewportPetals([]);
     toast.success('Você saiu da sala. Até logo! 🌸');
   };
 
+  // Fire petals across the viewport from the position of the exploding message
+  const handleExplode = useCallback((x: number, y: number) => {
+    const newPetals = Array.from({ length: 18 }, (_, i) => ({ id: Date.now() + i, startX: x, startY: y }));
+    setViewportPetals(prev => [...prev, ...newPetals]);
+  }, []);
+
+  const removePetal = useCallback((id: number) => {
+    setViewportPetals(prev => prev.filter(p => p.id !== id));
+  }, []);
+
   const handleSendRose = () => {
     if (!chatInput.trim()) return;
-    setRoseMessages(prev => [...prev, { id: Date.now(), name: myName, emoji: myEmoji, avatar: myEmoji, text: chatInput.trim() }]);
+    const newMsg = { id: Date.now(), name: myName, emoji: myEmoji, avatar: myEmoji, text: chatInput.trim() };
+    setRoseMessages(prev => [...prev, newMsg]);
     setChatInput('');
+    // also trigger a small burst from bottom-center immediately for feedback
+    setViewportPetals(prev => [
+      ...prev,
+      ...Array.from({ length: 10 }, (_, i) => ({ id: Date.now() + 100 + i, startX: window.innerWidth / 2, startY: window.innerHeight - 100 }))
+    ]);
   };
 
   const removeRoseMessage = useCallback((id: number) => {
@@ -256,7 +333,7 @@ const RadioDasMaes = () => {
     const reader = new FileReader();
     reader.readAsDataURL(audioBlob);
     reader.onloadend = async () => {
-      const newD = { id: Date.now(), author: myName || 'Você (Autora)', city: 'Seguro', content: 'Desabafo em áudio', likes: 0, time: 'Agora mesmo', duration: formatTime(recordingTime), isNew: true, audioData: reader.result as string, isUserAuthor: true };
+      const newD = { id: Date.now(), author: myName || 'Você', city: 'Seguro', content: 'Desabafo em áudio', likes: 0, time: 'Agora mesmo', duration: formatTime(recordingTime), isNew: true, audioData: reader.result as string, isUserAuthor: true };
       try { await saveDesabafoToDB(newD); setDesabafos([newD, ...desabafos]); setIsUploading(false); setAudioBlob(null); toast.success('Seu desabafo foi postado!'); }
       catch { setIsUploading(false); toast.error('Erro ao salvar! Áudio muito grande.'); }
     };
@@ -274,14 +351,14 @@ const RadioDasMaes = () => {
     if (playingFeedId === id) { audioFeedRef.current?.pause(); setPlayingFeedId(null); }
     await deleteDesabafoFromDB(id);
     setDesabafos(prev => prev.filter(d => d.id !== id));
-    toast.success('Áudio deletado com sucesso.');
+    toast.success('Áudio deletado.');
   };
 
-  const handleApoiar = async (id: number) => {
+  const handleApoiar = (id: number) => {
     setDesabafos(prev => prev.map(d => {
       if (d.id !== id) return d;
       if (d.hasLiked) { toast.info('Você já apoiou esta mãe.'); return d; }
-      toast.success('Você enviou um abraço de apoio!', { icon: '🫂' });
+      toast.success('Abraço de apoio enviado! 🫂');
       const novo = { ...d, likes: (d.likes || 0) + 1, hasLiked: true };
       saveDesabafoToDB(novo); return novo;
     }));
@@ -290,272 +367,319 @@ const RadioDasMaes = () => {
   /* ══ RENDER ══ */
   return (
     <div className="max-w-6xl mx-auto pb-12">
+
+      {/* ── Global viewport petals overlay ── */}
+      <AnimatePresence>
+        {viewportPetals.map(p => (
+          <ViewportPetal key={p.id} id={p.id} startX={p.startX} startY={p.startY} onDone={() => removePetal(p.id)} />
+        ))}
+      </AnimatePresence>
+
       {/* Header */}
-      <div className="bg-white/65 shadow-xl backdrop-blur-[12px] rounded-[2.5rem] border border-white/60 p-8 mb-8 relative overflow-hidden">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-          <div className="text-left font-sans">
-            <h1 className="text-4xl font-black text-[var(--texto-escuro)] mb-2 tracking-tight">
+      <div className="bg-white/65 shadow-xl backdrop-blur-[12px] rounded-[2.5rem] border border-white/60 p-6 mb-6 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-black text-[var(--texto-escuro)] tracking-tight">
               Voz & <span className="text-[var(--rosa-forte)]">Acolhimento</span>
             </h1>
-            <p className="text-[var(--texto-medio)] font-medium">Chamada ao vivo e desabafos em tempo real.</p>
+            <p className="text-[var(--texto-medio)] font-medium text-sm mt-1">Chamada ao vivo e desabafos em tempo real.</p>
           </div>
           <div className="flex bg-[var(--ativo-bg)] p-1.5 rounded-2xl border border-[var(--rosa-medio)]/20 shadow-inner">
-            <button onClick={() => setActiveTab('podcast')} className={`px-6 py-3 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'podcast' ? 'bg-white text-[var(--rosa-forte)] shadow-md' : 'text-[var(--texto-claro)] hover:text-[var(--texto-escuro)]'}`}>
-              <Headphones size={18} /> Sala ao Vivo
+            <button onClick={() => setActiveTab('podcast')} className={`px-5 py-2.5 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'podcast' ? 'bg-white text-[var(--rosa-forte)] shadow-md' : 'text-[var(--texto-claro)] hover:text-[var(--texto-escuro)]'}`}>
+              <Headphones size={16} /> Sala ao Vivo
             </button>
-            <button onClick={() => setActiveTab('desabafos')} className={`px-6 py-3 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'desabafos' ? 'bg-white text-[var(--rosa-forte)] shadow-md' : 'text-[var(--texto-claro)] hover:text-[var(--texto-escuro)]'}`}>
-              <Mic size={18} /> Voz das Mães
+            <button onClick={() => setActiveTab('desabafos')} className={`px-5 py-2.5 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'desabafos' ? 'bg-white text-[var(--rosa-forte)] shadow-md' : 'text-[var(--texto-claro)] hover:text-[var(--texto-escuro)]'}`}>
+              <Mic size={16} /> Voz das Mães
             </button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* LEFT PANEL */}
-        <div className="lg:col-span-5">
-          <AnimatePresence mode="wait">
-            {activeTab === 'podcast' ? (
-              <motion.div key="live-room" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-5">
+      <AnimatePresence mode="wait">
+        {activeTab === 'podcast' ? (
+          <motion.div key="podcast" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}>
 
-                {/* ── Stage ── */}
-                <div className="bg-[#1A0B10] rounded-[2.5rem] overflow-hidden shadow-2xl border-2 border-[var(--rosa-forte)]/30">
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center gap-2 px-3 py-1 bg-red-500 rounded-full text-[10px] font-black text-white animate-pulse">
-                        <Radio size={12} /> AO VIVO
+            {/* ══ IMMERSIVE LIVE ROOM ══ */}
+            <div className="bg-[#0f0610] rounded-[2.5rem] overflow-hidden shadow-2xl border border-[var(--rosa-forte)]/20 relative" style={{ minHeight: hasJoinedLive ? 680 : 420 }}>
+
+              {/* Top bar */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-30">
+                <div className="flex items-center gap-3">
+                  <motion.span
+                    animate={{ opacity: [1, 0.4, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.2 }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 rounded-full text-[10px] font-black text-white"
+                  >
+                    <Radio size={11} /> AO VIVO
+                  </motion.span>
+                  <span className="text-white/70 font-serif italic text-base">Sala de Apoio</span>
+                </div>
+                {hasJoinedLive && (
+                  <div className="flex items-center gap-3">
+                    {micActive && (
+                      <span className="flex items-center gap-1.5 text-[10px] font-black text-green-400 uppercase tracking-widest">
+                        <motion.span animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+                        MIC ON
                       </span>
-                      <span className="text-white font-serif italic text-base flex items-center gap-2">
-                        <Users size={15} className="text-[var(--rosa-forte)]" /> Sala de Apoio
-                      </span>
-                    </div>
-                    {hasJoinedLive && <span className="text-[10px] font-black text-white/40 uppercase">{participants.length} na sala</span>}
-                  </div>
-
-                  {/* Bubble stage */}
-                  <div className="relative w-full h-52 bg-gradient-to-b from-[#1A0B10] to-[#0b0408] overflow-hidden">
-                    {/* Pulse rings decoration */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.08, 0, 0.08] }} transition={{ duration: 4, repeat: Infinity }} className="w-56 h-56 rounded-full border border-pink-400/20" />
-                      <div className="absolute w-36 h-36 rounded-full border border-pink-400/10" />
-                    </div>
-
-                    {!hasJoinedLive ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                        <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2.5 }} className="text-5xl">🎙️</motion.span>
-                        <p className="text-white/30 text-xs font-bold tracking-widest uppercase text-center px-8 leading-relaxed">
-                          Entre na sala de voz para<br/>encontrar outras mães
-                        </p>
-                      </div>
-                    ) : (
-                      <AnimatePresence>
-                        {participants.map((p, i) => <FloatingBubble key={p.id} participant={p} index={i} />)}
-                      </AnimatePresence>
                     )}
+                    <span className="text-[10px] font-black text-white/30 uppercase">{participants.length} na sala</span>
                   </div>
+                )}
+              </div>
 
-                  {/* Control bar */}
-                  <div className="px-5 py-4 flex items-center justify-between bg-black/25 border-t border-white/5">
-                    {hasJoinedLive ? (
-                      <button onClick={handleLeaveLiveRoom} className="flex items-center gap-2 px-5 py-3 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all">
-                        <PhoneOff size={16} /> Sair da Chamada
-                      </button>
-                    ) : (
-                      <button onClick={handleJoinLiveRoom} disabled={isJoiningLive} className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[var(--rosa-forte)] to-rose-700 text-white font-black rounded-2xl text-sm uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
-                        {isJoiningLive ? <Loader2 size={18} className="animate-spin" /> : <PhoneCall size={18} />}
-                        {isJoiningLive ? 'Conectando...' : 'Entrar em Chamada'}
-                      </button>
-                    )}
-                    <span className="text-[10px] text-white/20 font-bold italic">🎙️ voz apenas</span>
-                  </div>
+              {/* Stage */}
+              <div className={`relative w-full transition-all duration-700 ${hasJoinedLive ? 'h-80 md:h-96' : 'h-64'} bg-gradient-to-b from-[#1a0b14] via-[#110810] to-[#060308] overflow-hidden`}>
+
+                {/* Ambient radial glow */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.08, 0.15, 0.08] }}
+                    transition={{ duration: 5, repeat: Infinity }}
+                    className="absolute w-96 h-96 rounded-full -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: '50%', top: '50%', background: 'radial-gradient(circle, rgba(236,72,153,0.3), transparent 70%)' }}
+                  />
+                </div>
+                {/* Pulse rings */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  {[1,2,3].map(i => (
+                    <motion.div key={i}
+                      animate={{ scale: [0.9, 1.3, 0.9], opacity: [0.06, 0, 0.06] }}
+                      transition={{ duration: 4 + i, repeat: Infinity, delay: i * 1.2 }}
+                      className="absolute rounded-full border border-pink-400/20"
+                      style={{ width: 80 + i * 60, height: 80 + i * 60 }}
+                    />
+                  ))}
                 </div>
 
-                {/* ── Rose Chat ── */}
-                <AnimatePresence>
-                  {hasJoinedLive && (
-                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }} className="bg-white/80 backdrop-blur-md rounded-[2.5rem] border border-pink-100 shadow-xl overflow-hidden">
-                      <div className="px-6 pt-5 pb-3 border-b border-pink-50 flex items-center justify-between">
-                        <span className="font-black text-[var(--texto-escuro)] text-sm flex items-center gap-2">🌹 Chat de Rosas</span>
-                        <span className="text-[9px] text-pink-300 font-black uppercase tracking-widest">somem em 2 min</span>
-                      </div>
-                      <div className="h-48 overflow-y-auto px-4 py-3 relative">
-                        {roseMessages.length === 0 ? (
-                          <div className="h-full flex items-center justify-center text-pink-200 text-xs font-bold italic text-center px-6">
-                            Envie uma rosa 🌹<br/>Ela florescerá e depois soltará pétalas pela tela
-                          </div>
-                        ) : (
-                          <AnimatePresence mode="popLayout">
-                            {roseMessages.map(msg => <RoseMessage key={msg.id} msg={msg} onExpire={() => removeRoseMessage(msg.id)} />)}
-                          </AnimatePresence>
-                        )}
-                        <div ref={chatEndRef} />
-                      </div>
-                      <div className="px-4 pb-4 pt-2 border-t border-pink-50">
-                        <div className="flex gap-2 items-center bg-pink-50/60 rounded-2xl border border-pink-100 px-4 py-2">
-                          <span className="text-base shrink-0">🌹</span>
-                          <input
-                            value={chatInput}
-                            onChange={e => setChatInput(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleSendRose()}
-                            maxLength={120}
-                            placeholder="Escreva uma mensagem de rosa..."
-                            className="flex-1 bg-transparent outline-none text-sm font-medium text-[#4B1528] placeholder:text-pink-200"
-                          />
-                          <button onClick={handleSendRose} disabled={!chatInput.trim()} className="w-8 h-8 rounded-full bg-[var(--rosa-forte)] text-white flex items-center justify-center disabled:opacity-30 hover:scale-110 active:scale-90 transition-all">
-                            <Send size={14} />
-                          </button>
+                {!hasJoinedLive ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                    <motion.span animate={{ scale: [1, 1.12, 1] }} transition={{ repeat: Infinity, duration: 2.2 }} className="text-6xl drop-shadow-2xl">🎙️</motion.span>
+                    <p className="text-white/30 text-xs font-bold tracking-[0.3em] uppercase text-center px-12 leading-loose">
+                      Entre na sala de voz<br/>para encontrar outras mães
+                    </p>
+                  </div>
+                ) : (
+                  <AnimatePresence>
+                    {participants.map((p, i) => (
+                      <FloatingBubble key={p.id} participant={p} index={i} total={participants.length} />
+                    ))}
+                  </AnimatePresence>
+                )}
+              </div>
+
+              {/* ── Rose Chat overlay (visible only when joined) ── */}
+              <AnimatePresence>
+                {hasJoinedLive && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="relative border-t border-white/5"
+                  >
+                    {/* Messages feed */}
+                    <div className="h-56 overflow-y-auto px-5 pt-5 pb-2 space-y-1 bg-gradient-to-b from-[#130a10] to-[#0a0609]">
+                      {roseMessages.length === 0 ? (
+                        <div className="h-full flex items-center justify-center">
+                          <p className="text-white/20 text-xs font-bold italic text-center">
+                            Envie uma rosa 🌹 — ela explodirá em pétalas pela tela
+                          </p>
                         </div>
+                      ) : (
+                        <AnimatePresence mode="popLayout">
+                          {roseMessages.map(msg => (
+                            <RoseMessage
+                              key={msg.id}
+                              msg={msg}
+                              onExpire={() => removeRoseMessage(msg.id)}
+                              onExplode={handleExplode}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      )}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    {/* Input bar */}
+                    <div className="px-5 py-4 bg-black/30 border-t border-white/5 flex items-center gap-3">
+                      <span className="text-xl shrink-0">🌹</span>
+                      <input
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSendRose()}
+                        maxLength={120}
+                        placeholder="Escreva uma mensagem de rosa..."
+                        className="flex-1 bg-white/10 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white/90 font-medium placeholder:text-white/20 outline-none focus:bg-white/15 focus:border-pink-500/40 transition-all"
+                      />
+                      <button
+                        onClick={handleSendRose}
+                        disabled={!chatInput.trim()}
+                        className="w-11 h-11 rounded-2xl bg-[var(--rosa-forte)] text-white flex items-center justify-center disabled:opacity-30 hover:scale-110 active:scale-90 transition-all shadow-lg shadow-pink-500/30"
+                      >
+                        <Send size={16} />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Control footer */}
+              <div className="flex items-center justify-between px-6 py-5 bg-black/40 border-t border-white/5">
+                {hasJoinedLive ? (
+                  <button onClick={handleLeaveLiveRoom} className="flex items-center gap-2 px-6 py-3 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all border border-red-500/20 hover:border-red-500">
+                    <PhoneOff size={16} /> Sair da Chamada
+                  </button>
+                ) : (
+                  <button onClick={handleJoinLiveRoom} disabled={isJoiningLive} className="flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-[var(--rosa-forte)] to-rose-700 text-white font-black rounded-2xl text-sm uppercase tracking-widest shadow-2xl shadow-pink-700/40 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                    {isJoiningLive ? <Loader2 size={20} className="animate-spin" /> : <PhoneCall size={20} />}
+                    {isJoiningLive ? 'Conectando...' : 'Entrar em Chamada'}
+                  </button>
+                )}
+                <div className="text-[10px] text-white/20 font-bold italic flex items-center gap-1.5">
+                  {micActive ? <><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" /> microfone ativo</> : '🎙️ voz apenas'}
+                </div>
+              </div>
+            </div>
+
+            {/* How it works card (below when not joined) */}
+            {!hasJoinedLive && (
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-6 bg-gradient-to-br from-[#1A0B10] to-[#2d0a1a] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--rosa-forte)]/15">
+                <h3 className="text-white font-serif italic text-xl mb-5 flex items-center gap-3">🌸 Como funciona a Sala</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { icon: '🎙️', title: 'Chamada de Voz', desc: 'Microfone ativado direto pelo navegador, sem instalação. Sua bolhinha pulsa quando você fala.' },
+                    { icon: '🫧', title: 'Bolhas Flutuantes', desc: 'Cada mãe que entra ganha uma bolhinha animada. A sala fica viva conforme mais mães chegam.' },
+                    { icon: '🌹', title: 'Chat de Rosas', desc: 'Mensagens surgem como rosas. Toque nelas para explodirem em pétalas pela tela toda.' },
+                    { icon: '🔒', title: 'Espaço Seguro', desc: 'Exclusivo para mães da comunidade. Sem câmera obrigatória.' },
+                  ].map((item, i) => (
+                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.07 }} className="flex gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <span className="text-2xl shrink-0 mt-0.5">{item.icon}</span>
+                      <div>
+                        <div className="text-white font-black text-sm mb-1">{item.title}</div>
+                        <div className="text-white/40 text-xs font-medium leading-relaxed">{item.desc}</div>
                       </div>
                     </motion.div>
-                  )}
-                </AnimatePresence>
-
+                  ))}
+                </div>
               </motion.div>
-            ) : (
-              /* ── Recorder panel ── */
-              <motion.div key="recorder-panel" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="bg-white/80 shadow-2xl backdrop-blur-md rounded-[2.5rem] border-2 border-[var(--rosa-forte)]/20 p-8 sticky top-24">
+            )}
+
+          </motion.div>
+        ) : (
+          /* ══ DESABAFOS TAB ══ */
+          <motion.div key="desabafos" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Recorder */}
+            <div className="lg:col-span-5">
+              <div className="bg-white/80 shadow-2xl backdrop-blur-md rounded-[2.5rem] border-2 border-[var(--rosa-forte)]/20 p-8 sticky top-24">
                 <div className="text-center mb-8">
-                  <div className="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mx-auto mb-6">
+                  <div className="w-20 h-20 rounded-full bg-pink-100 flex items-center justify-center mx-auto mb-5">
                     <Mic className="text-[var(--rosa-forte)]" size={32} />
                   </div>
-                  <h2 className="text-3xl font-black text-[var(--texto-escuro)] mb-2 italic">Seu Desabafo Real</h2>
-                  <p className="text-[var(--texto-medio)] font-medium">Gravando diretamente do seu microfone.</p>
+                  <h2 className="text-2xl font-black text-[var(--texto-escuro)] mb-2 italic">Seu Desabafo Real</h2>
+                  <p className="text-[var(--texto-medio)] font-medium text-sm">Gravando diretamente do seu microfone.</p>
                 </div>
-                <div className="bg-[#4B1528] rounded-3xl p-10 mb-8 relative flex items-center justify-center min-h-[200px] overflow-hidden">
+                <div className="bg-[#4B1528] rounded-3xl p-8 mb-6 relative flex items-center justify-center min-h-[180px] overflow-hidden">
                   {isRecording ? (
-                    <div className="flex items-center gap-2 h-14">
-                      {[...Array(12)].map((_, i) => (
-                        <motion.div key={i} animate={{ height: [10, Math.random() * 56 + 8, 10] }} transition={{ duration: 0.4, repeat: Infinity, delay: i * 0.04 }} className="w-2 bg-[var(--rosa-claro)] rounded-full" />
+                    <div className="flex items-center gap-1.5 h-12">
+                      {[...Array(14)].map((_, i) => (
+                        <motion.div key={i} animate={{ height: [8, Math.random() * 48 + 8, 8] }} transition={{ duration: 0.35, repeat: Infinity, delay: i * 0.04 }} className="w-1.5 bg-[var(--rosa-claro)] rounded-full" />
                       ))}
                     </div>
                   ) : audioBlob ? (
                     <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="text-white text-center">
-                      <Volume2 size={48} className="mx-auto mb-4 text-green-400" />
-                      <span className="font-black text-lg">Áudio Capturado</span>
-                      <p className="text-[10px] opacity-60">Pronto para postar</p>
+                      <Volume2 size={44} className="mx-auto mb-3 text-green-400" />
+                      <span className="font-black text-base">Áudio Capturado</span>
+                      <p className="text-[10px] opacity-50 mt-1">Pronto para postar</p>
                     </motion.div>
                   ) : (
-                    <div className="text-white/20 font-black text-sm uppercase tracking-[0.3em]">Microfone Pronto</div>
+                    <div className="text-white/20 font-black text-xs uppercase tracking-[0.3em]">Microfone Pronto</div>
                   )}
                   {isRecording && (
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-1.5 bg-red-500 rounded-full text-white text-[10px] font-black uppercase tracking-widest animate-pulse">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-1.5 bg-red-500 rounded-full text-white text-[10px] font-black uppercase animate-pulse">
                       <div className="w-2 h-2 rounded-full bg-white" /> AO VIVO {formatTime(recordingTime)}
                     </div>
                   )}
                 </div>
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   {!audioBlob ? (
-                    <button onClick={isRecording ? stopRecording : startRecording} className={`w-full py-5 rounded-[2rem] font-black text-lg transition-all flex items-center justify-center gap-3 shadow-xl ${isRecording ? 'bg-white text-red-500 border-2 border-red-500 animate-pulse' : 'bg-[var(--rosa-forte)] text-white hover:bg-[#b04066]'}`}>
-                      {isRecording ? <><StopCircle size={24} /> PARAR E SALVAR</> : <><Mic size={24} /> INICIAR GRAVAÇÃO</>}
+                    <button onClick={isRecording ? stopRecording : startRecording} className={`w-full py-5 rounded-[2rem] font-black text-base transition-all flex items-center justify-center gap-3 shadow-xl ${isRecording ? 'bg-white text-red-500 border-2 border-red-500 animate-pulse' : 'bg-[var(--rosa-forte)] text-white hover:bg-[#b04066]'}`}>
+                      {isRecording ? <><StopCircle size={22} /> PARAR E SALVAR</> : <><Mic size={22} /> INICIAR GRAVAÇÃO</>}
                     </button>
                   ) : (
                     <div className="flex gap-3">
                       <button onClick={() => setAudioBlob(null)} className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-400 font-bold hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center gap-2 border border-gray-200">
-                        <Trash2 size={18} /> Apagar
+                        <Trash2 size={16} /> Apagar
                       </button>
                       <button onClick={handlePostAudio} disabled={isUploading} className="flex-[2] py-4 rounded-2xl bg-[var(--rosa-forte)] text-white font-black shadow-lg hover:bg-[#b04066] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                        {isUploading ? <><Loader2 size={18} className="animate-spin" /> POSTANDO...</> : <><Send size={18} /> PUBLICAR DESABAFO</>}
+                        {isUploading ? <><Loader2 size={16} className="animate-spin" /> POSTANDO...</> : <><Send size={16} /> PUBLICAR DESABAFO</>}
                       </button>
                     </div>
                   )}
                 </div>
-                <div className="mt-6 p-4 bg-pink-50 border border-pink-100 rounded-2xl flex gap-3 text-xs text-[var(--rosa-forte)] font-bold">
-                  <Info size={20} className="shrink-0" /> Sua gravação é privada até que você clique em publicar.
+                <div className="mt-5 p-4 bg-pink-50 border border-pink-100 rounded-2xl flex gap-3 text-xs text-[var(--rosa-forte)] font-bold">
+                  <Info size={18} className="shrink-0" /> Sua gravação é privada até que você clique em publicar.
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
+            </div>
 
-        {/* RIGHT PANEL */}
-        <div className="lg:col-span-7 space-y-6">
-          <AnimatePresence mode="wait">
-            {activeTab === 'podcast' ? (
-              <motion.div key="live-info" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <div className="bg-gradient-to-br from-[#1A0B10] to-[#2d0a1a] rounded-[2.5rem] p-8 shadow-2xl border border-[var(--rosa-forte)]/20">
-                  <h3 className="text-white font-serif italic text-2xl mb-6 flex items-center gap-3">🌸 Como funciona a Sala</h3>
-                  <div className="space-y-4">
-                    {[
-                      { icon: '🎙️', title: 'Chamada de Voz', desc: 'Ao clicar em "Entrar em Chamada" seu microfone é ativado. Você pode ouvir e ser ouvida em tempo real pelas outras mães.' },
-                      { icon: '🫧', title: 'Bolhas Flutuantes', desc: 'Cada mãe que entra ganha uma bolhinha flutuante com seu emoji e nome. A sala fica viva conforme mais mães chegam.' },
-                      { icon: '🌹', title: 'Chat de Rosas', desc: 'Envie mensagens em forma de rosa. Elas ficam visíveis por 2 minutos e então explodem em pétalas translúcidas pela tela.' },
-                      { icon: '🔒', title: 'Espaço Seguro', desc: 'A sala é exclusiva para mães da comunidade Almas Atípicas. Sem câmera, apenas vozes e amor.' },
-                    ].map((item, i) => (
-                      <motion.div key={i} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }} className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                        <span className="text-2xl shrink-0">{item.icon}</span>
-                        <div>
-                          <div className="text-white font-black text-sm mb-1">{item.title}</div>
-                          <div className="text-white/50 text-xs font-medium leading-relaxed">{item.desc}</div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+            {/* Feed */}
+            <div className="lg:col-span-7 space-y-5">
+              <div className="p-6 bg-gradient-to-r from-[var(--rosa-forte)] to-[var(--rosa-medio)] rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+                <div className="relative z-10">
+                  <h2 className="text-xl font-black mb-1 flex items-center gap-3"><MessageSquarePlus size={20} /> Ouvindo o Coração</h2>
+                  <p className="text-sm font-bold opacity-80">Aqui você nunca está sozinha.</p>
                 </div>
-              </motion.div>
-            ) : (
-              <motion.div key="desabafos-feed" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                <div className="p-6 bg-gradient-to-r from-[var(--rosa-forte)] to-[var(--rosa-medio)] rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-                  <div className="relative z-10">
-                    <h2 className="text-2xl font-black mb-1 flex items-center gap-3"><MessageSquarePlus /> Ouvindo o Coração</h2>
-                    <p className="text-sm font-bold opacity-80">Aqui você nunca está sozinha. Use o apoio para abraçar uma mãe.</p>
-                  </div>
-                  <Radio className="absolute -right-8 -bottom-8 size-40 opacity-10 rotate-12" />
-                </div>
+                <Radio className="absolute -right-8 -bottom-8 size-36 opacity-10 rotate-12" />
+              </div>
 
-                {desabafos.length === 0 ? (
-                  <div className="text-center p-8 bg-white/50 rounded-[2rem] border border-white/50 text-[var(--texto-medio)] font-bold">
-                    Nenhum desabafo ainda. Seja a primeira a compartilhar sua voz!
+              {desabafos.length === 0 ? (
+                <div className="text-center p-10 bg-white/50 rounded-[2rem] border border-white/50 text-[var(--texto-medio)] font-bold">
+                  Nenhum desabafo ainda. Seja a primeira a compartilhar sua voz!
+                </div>
+              ) : desabafos.map(d => (
+                <motion.div key={d.id} layout initial={d.isNew ? { opacity: 0, scale: 0.9, y: -20 } : false} animate={{ opacity: 1, scale: 1, y: 0 }} className={`bg-white/90 shadow-xl rounded-[2rem] border p-5 hover:shadow-2xl transition-all ${d.isNew ? 'border-[var(--rosa-forte)]/40 ring-2 ring-[var(--rosa-forte)]/10' : 'border-white'}`}>
+                  <div className="flex gap-4 items-start mb-4">
+                    <div className="w-11 h-11 rounded-full bg-pink-100 flex items-center justify-center font-black text-[var(--rosa-forte)] border-2 border-white shadow-sm shrink-0">{d.author[0]}</div>
+                    <div>
+                      <h4 className="font-bold text-[var(--texto-escuro)] text-sm flex items-center gap-2">{d.author}{d.isNew && <span className="bg-[var(--rosa-forte)] text-white text-[8px] px-2 py-0.5 rounded-full">NOVO</span>}</h4>
+                      <p className="text-[10px] text-[var(--texto-claro)] uppercase font-black">{d.city} • {d.time}</p>
+                    </div>
                   </div>
-                ) : desabafos.map(d => (
-                  <motion.div key={d.id} layout initial={d.isNew ? { opacity: 0, scale: 0.9, y: -20 } : false} animate={{ opacity: 1, scale: 1, y: 0 }} className={`bg-white/90 shadow-xl rounded-[2rem] border p-6 hover:shadow-2xl transition-all ${d.isNew ? 'border-[var(--rosa-forte)]/40 ring-2 ring-[var(--rosa-forte)]/10' : 'border-white'}`}>
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                      <div className="md:col-span-8">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center font-black text-[var(--rosa-forte)] border-2 border-white shadow-sm">{d.author[0]}</div>
-                          <div>
-                            <h4 className="font-bold text-[var(--texto-escuro)] flex items-center gap-2">{d.author}{d.isNew && <span className="bg-[var(--rosa-forte)] text-white text-[8px] px-2 py-0.5 rounded-full">NOVO</span>}</h4>
-                            <p className="text-[10px] text-[var(--texto-claro)] uppercase font-black">{d.city} • {d.time}</p>
-                          </div>
-                        </div>
-                        <div onClick={() => handlePlayFeedAudio(d)} className={`bg-[var(--ativo-bg)] rounded-3xl p-4 flex items-center gap-4 group cursor-pointer transition-colors ${playingFeedId === d.id ? 'bg-pink-100 ring-2 ring-[var(--rosa-forte)]/50' : 'hover:bg-pink-50'}`}>
-                          <button className={`w-10 h-10 ${playingFeedId === d.id ? 'bg-white text-[var(--rosa-forte)]' : 'bg-[var(--rosa-forte)] text-white'} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                            {playingFeedId === d.id
-                              ? <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                              : <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
-                          </button>
-                          <div className="flex-1 space-y-2">
-                            <div className="h-1 bg-white/60 rounded-full overflow-hidden">
-                              <motion.div animate={{ width: playingFeedId === d.id ? ['0%','100%'] : '0%' }} transition={{ duration: 60, ease: 'linear' }} className="h-full bg-[var(--rosa-forte)]" />
-                            </div>
-                            <div className="flex justify-between text-[8px] font-black text-[var(--texto-claro)] uppercase">
-                              <span className={playingFeedId === d.id ? 'text-[var(--rosa-forte)] animate-pulse' : ''}>{playingFeedId === d.id ? 'TOCANDO...' : '00:00'}</span>
-                              <span>{d.duration}</span>
-                            </div>
-                          </div>
-                        </div>
+                  <div onClick={() => handlePlayFeedAudio(d)} className={`bg-[var(--ativo-bg)] rounded-2xl p-3 flex items-center gap-3 cursor-pointer mb-4 transition-colors ${playingFeedId === d.id ? 'bg-pink-100 ring-2 ring-[var(--rosa-forte)]/50' : 'hover:bg-pink-50'}`}>
+                    <button className={`w-10 h-10 ${playingFeedId === d.id ? 'bg-white text-[var(--rosa-forte)]' : 'bg-[var(--rosa-forte)] text-white'} rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform shrink-0`}>
+                      {playingFeedId === d.id
+                        ? <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                        : <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
+                    </button>
+                    <div className="flex-1">
+                      <div className="h-1 bg-white/60 rounded-full overflow-hidden">
+                        <motion.div animate={{ width: playingFeedId === d.id ? ['0%','100%'] : '0%' }} transition={{ duration: 60, ease: 'linear' }} className="h-full bg-[var(--rosa-forte)]" />
                       </div>
-                      <div className="md:col-span-4 flex md:flex-col justify-around gap-2">
-                        <button onClick={() => handleApoiar(d.id)} className={`flex-1 py-3 px-4 rounded-xl border flex items-center justify-center gap-2 text-xs font-black transition-all active:scale-95 ${d.hasLiked ? 'bg-[var(--rosa-forte)] text-white border-[var(--rosa-forte)]' : 'bg-white border-pink-100 text-[var(--rosa-forte)] hover:bg-pink-50'}`}>
-                          <Heart size={16} fill={d.hasLiked ? 'currentColor' : 'none'} /> {d.hasLiked ? 'APOIADA' : 'APOIAR'} {d.likes > 0 && `(${d.likes})`}
-                        </button>
-                        {d.isUserAuthor ? (
-                          <button onClick={() => handleDeleteDesabafo(d.id)} className="flex-1 py-3 px-4 rounded-xl bg-white border border-red-100 flex items-center justify-center gap-2 text-xs font-black text-red-500 hover:bg-red-50 transition-all active:scale-95">
-                            <Trash2 size={16} /> EXCLUIR
-                          </button>
-                        ) : (
-                          <button onClick={() => toast.success('Link copiado!')} className="flex-1 py-3 px-4 rounded-xl bg-white border border-pink-100 flex items-center justify-center gap-2 text-xs font-black text-[var(--texto-claro)] hover:bg-gray-50 transition-all active:scale-95">
-                            <Share2 size={16} /> ENVIAR
-                          </button>
-                        )}
+                      <div className="flex justify-between text-[9px] font-black text-[var(--texto-claro)] uppercase mt-1">
+                        <span className={playingFeedId === d.id ? 'text-[var(--rosa-forte)] animate-pulse' : ''}>{playingFeedId === d.id ? 'TOCANDO...' : '00:00'}</span>
+                        <span>{d.duration}</span>
                       </div>
                     </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleApoiar(d.id)} className={`flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 text-xs font-black transition-all active:scale-95 ${d.hasLiked ? 'bg-[var(--rosa-forte)] text-white border-[var(--rosa-forte)]' : 'bg-white border-pink-100 text-[var(--rosa-forte)] hover:bg-pink-50'}`}>
+                      <Heart size={15} fill={d.hasLiked ? 'currentColor' : 'none'} /> {d.hasLiked ? 'APOIADA' : 'APOIAR'} {d.likes > 0 && `(${d.likes})`}
+                    </button>
+                    {d.isUserAuthor ? (
+                      <button onClick={() => handleDeleteDesabafo(d.id)} className="flex-1 py-3 rounded-xl bg-white border border-red-100 flex items-center justify-center gap-2 text-xs font-black text-red-500 hover:bg-red-50 transition-all active:scale-95">
+                        <Trash2 size={15} /> EXCLUIR
+                      </button>
+                    ) : (
+                      <button onClick={() => toast.success('Link copiado!')} className="flex-1 py-3 rounded-xl bg-white border border-pink-100 flex items-center justify-center gap-2 text-xs font-black text-[var(--texto-claro)] hover:bg-gray-50 transition-all active:scale-95">
+                        <Share2 size={15} /> ENVIAR
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
