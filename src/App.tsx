@@ -16,6 +16,7 @@ import DiarioDaJornada from "./pages/DiarioDaJornada";
 import CadernetaDigital from "./pages/CadernetaDigital";
 import RotinaDoDia from "./pages/RotinaDoDia";
 import MomentoPausa from "./pages/MomentoPausa";
+import GerenciadorConsultas from "./pages/GerenciadorConsultas";
 
 // Comunidade
 import RedeDeMaes from "./pages/RedeDeMaes";
@@ -103,6 +104,7 @@ function App() {
                 <Route path="/caderneta" element={<CadernetaDigital />} />
                 <Route path="/rotina" element={<RotinaDoDia />} />
                 <Route path="/pausa" element={<MomentoPausa />} />
+                <Route path="/consultas" element={<GerenciadorConsultas />} />
 
                 <Route path="/rede-de-maes" element={<RedeDeMaes />} />
                 <Route path="/radio" element={<RadioDasMaes />} />
