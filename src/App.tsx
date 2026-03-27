@@ -59,8 +59,8 @@ const AppLayout = () => {
   return (
     <ProtectedRoute>
       <Sidebar />
-      <div className="lg:pl-[220px] pt-16 lg:pt-0 w-full min-h-screen">
-        <main className="w-full h-full p-4 lg:p-8">
+      <div className="lg:pl-[240px] pt-16 lg:pt-0 w-full min-h-screen">
+        <main className="w-full h-full p-3 sm:p-4 md:p-6 lg:p-8">
           <AnimatePresence mode="wait">
             <PageWrapper key={location.pathname}>
                <Outlet />

@@ -47,7 +47,7 @@ const Index = () => {
 
       <main className="relative z-10">
         {/* HERO SECTION */}
-        <section className="pt-40 pb-20 px-6 md:px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center min-h-[90vh]">
+        <section className="pt-28 sm:pt-36 md:pt-40 pb-16 md:pb-20 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[90vh]">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -59,13 +59,13 @@ const Index = () => {
               <span className="text-xs font-black uppercase text-[var(--rosa-forte)] tracking-widest">Inscrições Abertas - Vagas Limitadas</span>
             </motion.div>
             
-            <motion.h1 variants={itemVariants} className="text-5xl lg:text-7xl font-black text-[var(--texto-escuro)] leading-[1.05] mb-6">
+            <motion.h1 variants={itemVariants} className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-[var(--texto-escuro)] leading-[1.05] mb-4 md:mb-6">
               Você não precisa<br/>
               <span className="text-[var(--rosa-forte)] italic font-serif">ser forte</span><br/>
               o tempo todo.
             </motion.h1>
             
-            <motion.p variants={itemVariants} className="text-xl text-[var(--texto-medio)] mb-10 max-w-xl leading-relaxed font-medium">
+            <motion.p variants={itemVariants} className="text-base sm:text-lg md:text-xl text-[var(--texto-medio)] mb-6 md:mb-10 max-w-xl leading-relaxed font-medium">
               A exaustão da mãe atípica é invisível para o mundo, mas real no seu coração. 
               Encontre o suporte, as ferramentas e a comunidade que entendem sua jornada sem julgamentos.
             </motion.p>
@@ -86,7 +86,7 @@ const Index = () => {
             </motion.div>
           </motion.div>
 
-          <motion.div 
+          <motion.div className="hidden sm:block"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -131,7 +131,7 @@ const Index = () => {
         <section id="solucao" className="py-24 bg-white/40">
           <div className="max-w-7xl mx-auto px-6 md:px-12 text-center mb-16">
             <h2 className="text-sm font-black text-[var(--rosa-forte)] uppercase tracking-[0.3em] mb-4">A Jornada é Solitária?</h2>
-            <h3 className="text-4xl md:text-5xl font-black text-[var(--texto-escuro)] mb-8">Sabemos exatamente o que você sente.</h3>
+            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-[var(--texto-escuro)] mb-6 md:mb-8">Sabemos exatamente o que você sente.</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
               {[
                 { title: "Carga Mental Exaustiva", desc: "Consultas, terapias, escola e o medo constante do futuro. A mente nunca descansa." },
@@ -172,7 +172,7 @@ const Index = () => {
                   ))}
                 </div>
               </div>
-              <div className="lg:w-1/2 grid grid-cols-2 gap-4">
+              <div className="hidden md:grid lg:w-1/2 grid-cols-2 gap-4">
                  <div className="aspect-[4/5] bg-pink-100 rounded-3xl overflow-hidden shadow-lg transform translate-y-8">
                     <img src="https://images.unsplash.com/photo-1544126592-807daa2b569b?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover" alt="Mãe e filho" />
                  </div>
@@ -189,7 +189,7 @@ const Index = () => {
           
           <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
             <h2 className="text-sm font-black text-[var(--rosa-forte)] uppercase tracking-[0.3em] mb-4">Escolha sua Porta de Entrada</h2>
-            <h3 className="text-4xl md:text-5xl font-black mb-16">O investimento no seu <span className="italic">suporte</span>.</h3>
+            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-8 md:mb-16">O investimento no seu <span className="italic">suporte</span>.</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
                {/* Free Plan */}

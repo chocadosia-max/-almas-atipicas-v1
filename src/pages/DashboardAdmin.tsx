@@ -187,9 +187,9 @@ const DashboardAdmin = () => {
 
   return (
     <div className="max-w-7xl mx-auto pb-12 w-full">
-      <div className="bg-white/65 shadow-xl backdrop-blur-[8px] rounded-3xl border border-white/40 p-8 mb-8 flex flex-col md:flex-row items-center justify-between">
+      <div className="bg-white/65 shadow-xl backdrop-blur-[8px] rounded-3xl border border-white/40 p-4 sm:p-6 md:p-8 mb-6 md:mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-[#4B1528] font-serif flex items-center gap-3 mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#4B1528] font-serif flex items-center gap-2 mb-2">
              ⚙️ Painel de Controle (Admin)
           </h1>
           <p className="text-[#72243E] opacity-80">
@@ -216,7 +216,7 @@ const DashboardAdmin = () => {
         <>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
         <div className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-3xl p-6 shadow-lg text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-20">
              <Users size={80} />
