@@ -249,7 +249,7 @@ const RadioDasMaes = () => {
                 {activeTab === 'podcast' ? (
                     <motion.div key="stage-layout" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col gap-2 min-h-0 relative">
                         {/* Interactive Stage - TAKES UP MOST SPACE */}
-                        <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 rounded-[3.5rem] overflow-hidden shadow-2xl border-2 border-white/10 relative bg-black perspective-[1000px]">
+                        <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 min-h-[460px] rounded-[3.5rem] overflow-hidden shadow-2xl border-2 border-white/10 relative bg-black perspective-[1000px]">
                             <div className="absolute inset-0 bg-gradient-radial from-[#1e0a16] via-[#0d040a] to-[#050103] opacity-90" />
                             
                             {/* Floating Messages Layer */}
