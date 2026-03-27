@@ -247,6 +247,21 @@ const Index = () => {
            </div>
         </section>
 
+        {/* FOOTER */}
+        <footer className="py-12 border-t border-[var(--rosa-forte)]/10 px-6 md:px-12 text-center text-[var(--texto-claro)] text-sm font-bold">
+           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="font-black text-xl text-[var(--texto-escuro)] flex items-center gap-2">
+                <Sparkles className="text-[var(--rosa-forte)]" size={20} /> 
+                almas atípicas
+              </div>
+              <div className="flex gap-8">
+                 <Link to="/login" className="hover:text-[var(--rosa-forte)]">Termos</Link>
+                 <Link to="/login" className="hover:text-[var(--rosa-forte)]">Privacidade</Link>
+                 <Link to="/login" className="hover:text-[var(--rosa-forte)]">Suporte</Link>
+              </div>
+              <div>© 2026 Almas Atípicas - Desenvolvido com ❤️ para mães reais.</div>
+           </div>
+        </footer>
       </main>
     </div>
   );

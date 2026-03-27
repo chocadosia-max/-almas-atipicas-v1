@@ -29,7 +29,6 @@ const NAV_GROUPS: NavGroup[] = [
       { name: "Rotina", path: "/rotina", icon: Clock },
       { name: "Momento Pausa", path: "/pausa", icon: Coffee },
       { name: "Consultas", path: "/consultas", icon: Stethoscope, highlight: false },
-      { name: "Assistente IA", path: "/assistente", icon: Sparkles, highlight: true },
     ],
   },
   {
