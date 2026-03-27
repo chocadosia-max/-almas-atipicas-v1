@@ -189,14 +189,24 @@ const RadioDasMaes = () => {
   /* ── Jitsi Integration ── */
   const handleJoinLiveRoom = async () => {
     if (!window.JitsiMeetExternalAPI) {
-      toast.error('Carregando sistema de áudio... tente novamente em 2 segundos.');
+      toast.error('O sistema de áudio está carregando. Tente novamente em alguns segundos.');
       return;
     }
     setIsJoiningLive(true);
+    
+    // Safety timeout: if after 15s we haven't joined, reset state
+    const timeout = setTimeout(() => {
+      if (!hasJoinedLive && isJoiningLive) {
+        setIsJoiningLive(false);
+        toast.error('A conexão demorou muito. Verifique sua internet ou tente novamente.');
+        jitsiApiRef.current?.dispose();
+      }
+    }, 15000);
+
     try {
       const domain = 'meet.ffmuc.net';
       const options = {
-        roomName: 'AlmasAtipicas_Radio_Live_Acolhimento',
+        roomName: 'AlmasAtipicas_Radio_Live_Acolhimento_Imersivo',
         width: '100%',
         height: '100%',
         parentNode: jitsiContainerRef.current,
@@ -205,7 +215,9 @@ const RadioDasMaes = () => {
           startWithAudioMuted: false,
           startWithVideoMuted: true,
           prejoinPageEnabled: false,
+          disableDeepLinking: true,
           enableWelcomePage: false,
+          enableNoAudioDetection: true,
           hideConferenceTimer: true,
           toolbarButtons: []
         },
@@ -221,6 +233,7 @@ const RadioDasMaes = () => {
 
       api.addEventListeners({
         videoConferenceJoined: (local: any) => {
+          clearTimeout(timeout);
           setParticipants([{ id: local.id, name: myName, emoji: myEmoji, speaking: false, isMe: true, hearts: 0 }]);
           setHasJoinedLive(true);
           setIsJoiningLive(false);
@@ -250,10 +263,21 @@ const RadioDasMaes = () => {
           setParticipants(prev => prev.map(p => p.isMe ? { ...p, speaking: data.audioLevel > 0.05 } : p));
         }
       });
+      
+      // Also listen to conference joined just in case
+      api.addEventListener('conferenceJoined', () => {
+         if (!hasJoinedLive) {
+           clearTimeout(timeout);
+           setHasJoinedLive(true);
+           setIsJoiningLive(false);
+         }
+      });
+
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao conectar.');
+      toast.error('Erro ao iniciar a chamada de áudio.');
       setIsJoiningLive(false);
+      clearTimeout(timeout);
     }
   };
 
@@ -267,11 +291,6 @@ const RadioDasMaes = () => {
     setScorePopups([]);
     setChatMessages([]);
     toast.success('Você saiu da sala.');
-  };
-
-  const handleSelectParticipant = (p: any) => {
-    if (p.isMe) { toast.info('Não pode enviar coração para si mesma! 😄'); return; }
-    setSelectedTargetId((prev: any) => prev === p.id ? null : p.id);
   };
 
   const triggerHeartVisuals = (targetId: any) => {
@@ -301,6 +320,11 @@ const RadioDasMaes = () => {
     jitsiApiRef.current?.executeCommand('sendEndpointTextMessage', '', JSON.stringify({ type: 'chat', name: myName, text: chatInput.trim() }));
     setChatMessages(prev => [...prev, { id: Date.now(), name: myName, text: chatInput.trim() }]);
     setChatInput('');
+  };
+
+  const handleSelectParticipant = (p: any) => {
+    if (p.isMe) { toast.info('Não pode enviar coração para si mesma! 😄'); return; }
+    setSelectedTargetId((prev: any) => prev === p.id ? null : p.id);
   };
 
   /* ── Audio Recorder ── */
@@ -382,7 +406,10 @@ const RadioDasMaes = () => {
         </div>
       </div>
 
-      <div ref={jitsiContainerRef} className="hidden opacity-0 pointer-events-none" style={{ width: 0, height: 0 }} />
+      {/* Hidden Jitsi Container — Positioned off-screen but active */}
+      <div ref={jitsiContainerRef} 
+        style={{ position: 'fixed', left: '-9999px', top: 0, width: '400px', height: '400px', opacity: 0.01 }} 
+      />
 
       <AnimatePresence mode="wait">
         {activeTab === 'podcast' ? (
@@ -396,9 +423,11 @@ const RadioDasMaes = () => {
                 {!hasJoinedLive ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                     <span className="text-6xl">🎙️</span>
-                    <button onClick={handleJoinLiveRoom} disabled={isJoiningLive} className="px-8 py-4 bg-pink-500 text-white font-black rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">
+                    <button onClick={handleJoinLiveRoom} disabled={isJoiningLive} className="px-12 py-4 bg-pink-500 text-white font-black rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
+                      {isJoiningLive ? <Loader2 className="animate-spin" size={20} /> : <PhoneCall size={20} />}
                       {isJoiningLive ? 'Conectando...' : 'Entrar na Sala'}
                     </button>
+                    {isJoiningLive && <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest animate-pulse">Iniciando áudio e sincronização...</p>}
                   </div>
                 ) : (
                   <AnimatePresence>
@@ -412,14 +441,20 @@ const RadioDasMaes = () => {
               </div>
               {hasJoinedLive && (
                 <>
-                  <div ref={chatRef} className="h-28 overflow-y-auto px-5 pt-3 pb-1 bg-black/25 space-y-1">
-                    {chatMessages.map(m => <div key={m.id} className="text-xs text-white/70"><span className="text-pink-400 font-bold">{m.name}:</span> {m.text}</div>)}
+                  <div ref={chatRef} className="h-28 overflow-y-auto px-5 pt-3 pb-1 bg-black/25 space-y-1 text-smooth-scroll">
+                    {chatMessages.length === 0 ? (
+                      <div className="h-full flex items-center justify-center opacity-10">
+                         <span className="text-[10px] font-black uppercase">O chat está vazio</span>
+                      </div>
+                    ) : (
+                      chatMessages.map(m => <div key={m.id} className="text-xs text-white/70 animate-in fade-in slide-in-from-left-2"><span className="text-pink-400 font-bold">{m.name}:</span> {m.text}</div>)
+                    )}
                   </div>
                   <div className="px-4 py-3 bg-black/30 border-t border-white/5 flex gap-2">
-                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Mensagem..." className="flex-1 bg-white/5 rounded-xl px-4 py-2 text-white outline-none" />
-                    <button onClick={handleSendMessage} className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white"><Send size={14} /></button>
-                    <button onClick={handleSendHeart} className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${selectedTargetId ? 'bg-pink-500' : 'bg-white/10 opacity-30'}`}>❤️</button>
-                    <button onClick={handleLeaveLiveRoom} className="px-4 h-10 bg-red-500 text-white font-bold rounded-xl text-[10px] uppercase">Sair</button>
+                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Mensagem..." className="flex-1 bg-white/5 rounded-xl px-4 py-2 text-white outline-none focus:bg-white/10 transition-all" />
+                    <button onClick={handleSendMessage} className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white hover:bg-white/20 transition-all"><Send size={14} /></button>
+                    <button onClick={handleSendHeart} className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${selectedTargetId ? 'bg-pink-500 scale-110' : 'bg-white/10 opacity-30 shadow-inner'}`}>❤️</button>
+                    <button onClick={handleLeaveLiveRoom} className="px-4 h-10 bg-red-500/80 hover:bg-red-500 text-white font-bold rounded-xl text-[10px] uppercase transition-all">Sair</button>
                   </div>
                 </>
               )}
@@ -430,23 +465,27 @@ const RadioDasMaes = () => {
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-3xl shadow-xl border border-pink-100 text-center">
               <h2 className="text-xl font-bold mb-4">Novo Desabafo</h2>
-              <button onClick={isRecording ? stopRecording : startRecording} className={`w-full py-4 rounded-xl font-bold ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-pink-500 text-white'}`}>
+              <button onClick={isRecording ? stopRecording : startRecording} className={`w-full py-4 rounded-xl font-bold transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-pink-500 text-white hover:bg-pink-600'}`}>
                 {isRecording ? 'Parar Gravação' : 'Iniciar Microfone'}
               </button>
-              {audioBlob && <button onClick={handlePostAudio} className="w-full mt-2 py-4 bg-green-500 text-white font-bold rounded-xl">Publicar</button>}
+              {audioBlob && <button onClick={handlePostAudio} className="w-full mt-2 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600">Publicar</button>}
             </div>
-            {desabafos.map(d => (
-              <div key={d.id} className="bg-white p-5 rounded-3xl shadow-md border border-gray-50 flex flex-col gap-4">
-                <div className="flex justify-between items-center"><span className="font-bold text-sm text-pink-600">{d.author}</span><span className="text-[10px] text-gray-400">{d.time}</span></div>
-                <button onClick={() => handlePlayFeedAudio(d)} className="w-full py-3 bg-gray-100 rounded-xl flex items-center justify-center gap-2 font-bold text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-all">
-                  <Headphones size={16} /> Ouvir Desabafo ({d.duration || 'Gravação'})
-                </button>
-                <div className="flex gap-2">
-                  <button onClick={() => handleApoiar(d.id)} className={`flex-1 py-2 rounded-xl border text-xs font-bold ${d.hasLiked ? 'bg-pink-500 text-white' : 'text-pink-500 border-pink-100'}`}>Apoiar {d.likes > 0 && `(${d.likes})`}</button>
-                  {d.isUserAuthor && <button onClick={() => handleDeleteDesabafo(d.id)} className="px-4 py-2 border border-red-100 text-red-400 rounded-xl"><Trash2 size={14} /></button>}
+            {desabafos.length === 0 ? (
+               <div className="text-center py-12 opacity-30 italic">Nenhum desabafo ainda...</div>
+            ) : (
+              desabafos.map(d => (
+                <div key={d.id} className="bg-white p-5 rounded-3xl shadow-md border border-gray-50 flex flex-col gap-4">
+                  <div className="flex justify-between items-center"><span className="font-bold text-sm text-pink-600">{d.author}</span><span className="text-[10px] text-gray-400">{d.time}</span></div>
+                  <button onClick={() => handlePlayFeedAudio(d)} className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${playingFeedId === d.id ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-pink-50 hover:text-pink-600'}`}>
+                    <Headphones size={16} /> Ouvir Desabafo ({d.duration || 'Gravação'})
+                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleApoiar(d.id)} className={`flex-1 py-2 rounded-xl border text-xs font-bold transition-all ${d.hasLiked ? 'bg-pink-500 text-white border-pink-500' : 'text-pink-500 border-pink-100 hover:bg-pink-50'}`}>Apoiar {d.likes > 0 && `(${d.likes})`}</button>
+                    {d.isUserAuthor && <button onClick={() => handleDeleteDesabafo(d.id)} className="px-4 py-2 border border-red-100 text-red-400 rounded-xl hover:bg-red-50"><Trash2 size={14} /></button>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </AnimatePresence>
