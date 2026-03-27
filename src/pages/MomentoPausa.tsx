@@ -31,6 +31,34 @@ const SUPPORT_MESSAGES = [
   "Libere a culpa. Você está fazendo o impossível todos os dias.",
 ];
 
+// ─── INDEXED DB WRAPPER ────────────────────────────────────────────────────────
+const DB_NAME = 'AlmasZenDB';
+const STORE_NAME = 'audios';
+const initDB = () => new Promise<IDBDatabase>((resolve, reject) => {
+  const request = indexedDB.open(DB_NAME, 1);
+  request.onupgradeneeded = () => request.result.createObjectStore(STORE_NAME, { keyPath: 'id' });
+  request.onsuccess = () => resolve(request.result);
+  request.onerror = () => reject(request.error);
+});
+const saveAudioToDB = async (audioObj: any) => {
+  const db = await initDB();
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  tx.objectStore(STORE_NAME).put(audioObj);
+  return new Promise((res, rej) => { tx.oncomplete = () => res(undefined); tx.onerror = () => rej(tx.error); });
+};
+const getAudiosFromDB = async () => {
+  const db = await initDB();
+  const tx = db.transaction(STORE_NAME, 'readonly');
+  const req = tx.objectStore(STORE_NAME).getAll();
+  return new Promise<any[]>((res, rej) => { req.onsuccess = () => res(req.result || []); req.onerror = () => rej(req.error); });
+};
+const deleteAudioFromDB = async (id: string) => {
+  const db = await initDB();
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  tx.objectStore(STORE_NAME).delete(id);
+  return new Promise((res, rej) => { tx.oncomplete = () => res(undefined); tx.onerror = () => rej(tx.error); });
+};
+
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 const MomentoPausa = () => {
   const navigate = useNavigate();
@@ -41,10 +69,25 @@ const MomentoPausa = () => {
   const [affIndex, setAffIndex] = useState(0);
   
   // Audio Player State
-  const [audios, setAudios] = useState<any[]>(() => {
-    const saved = localStorage.getItem('almas_zen_audio');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [audios, setAudios] = useState<any[]>([]);
+
+  useEffect(() => {
+    getAudiosFromDB().then((data) => {
+      if (data && data.length > 0) {
+        data.sort((a,b) => Number(b.id) - Number(a.id));
+        setAudios(data);
+      } else {
+        const saved = localStorage.getItem('almas_zen_audio');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setAudios(parsed);
+            parsed.forEach((p:any) => saveAudioToDB(p));
+          } catch {}
+        }
+      }
+    });
+  }, []);
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -128,21 +171,27 @@ const MomentoPausa = () => {
     }
   };
 
-  const saveNewAudio = () => {
+  const saveNewAudio = async () => {
     if (!newAudioTitle || !newAudioBase64) return toast.error("Título e MP3 obrigatórios!");
+    toast.loading("Salvando música...", { id: "saving_audio" });
     const novo = { id: Date.now().toString(), title: newAudioTitle, url: newAudioBase64, fileName: newAudioFile?.name || 'Musica' };
-    const updated = [novo, ...audios];
-    setAudios(updated);
-    localStorage.setItem('almas_zen_audio', JSON.stringify(updated));
-    setNewAudioTitle(''); setNewAudioBase64(''); setNewAudioFile(null);
-    toast.success("Música adicionada!");
-    window.dispatchEvent(new Event('storage'));
+    
+    try {
+      await saveAudioToDB(novo);
+      const updated = [novo, ...audios];
+      setAudios(updated);
+      setNewAudioTitle(''); setNewAudioBase64(''); setNewAudioFile(null);
+      toast.success("Música adicionada!", { id: "saving_audio" });
+      window.dispatchEvent(new Event('storage'));
+    } catch(err) {
+      toast.error("Erro ao salvar! O arquivo pode ser grande demais.", { id: "saving_audio" });
+    }
   };
 
-  const deleteAudio = (id: string) => {
+  const deleteAudio = async (id: string) => {
+    await deleteAudioFromDB(id);
     const updated = audios.filter(a => a.id !== id);
     setAudios(updated);
-    localStorage.setItem('almas_zen_audio', JSON.stringify(updated));
     toast.success("Música removida.");
     if (currentAudioIndex >= updated.length) setCurrentAudioIndex(0);
     window.dispatchEvent(new Event('storage'));
