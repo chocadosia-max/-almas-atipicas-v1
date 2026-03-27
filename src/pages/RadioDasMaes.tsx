@@ -36,7 +36,6 @@ const Firefly = () => {
 /* ─── Bubble Component ─── */
 const FloatingBubble = ({ participant, index, total, isSelected, isReceivingHeart, isHugging, onClick, onBubbleRef }: any) => {
     const angle = (index / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
-    // Shift bubbles more to the right to avoid overlapping with left chat
     const cx = isHugging ? 60 + Math.cos(angle) * 10 : 65 + Math.cos(angle) * 25;
     const cy = isHugging ? 45 + Math.sin(angle) * 8 : 45 + Math.sin(angle) * 28;
     const hearts = Number(participant.hearts) || 0;
@@ -80,9 +79,6 @@ const MuralCard = ({ card, onPlay }: any) => {
     );
 };
 
-/* ══════════════════════════════════
-   MAIN COMPONENT
-══════════════════════════════════ */
 const RadioDasMaes = () => {
     const [activeTab, setActiveTab] = useState<'podcast' | 'desabafos'>('podcast');
     const [desabafos, setDesabafos] = useState<any[]>(() => {
@@ -93,8 +89,6 @@ const RadioDasMaes = () => {
     const [participants, setParticipants] = useState<any[]>([]);
     const [selectedTargetId, setSelectedTargetId] = useState<any>(null);
     const [receivingHeartId, setReceivingHeartId] = useState<any>(null);
-    
-    // Chat List
     const [chatMessages, setChatMessages] = useState<any[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [heartsSent, setHeartsSent] = useState<Set<string>>(new Set());
@@ -107,8 +101,7 @@ const RadioDasMaes = () => {
     const rotateY = useTransform(useSpring(mouseX, { damping: 20, stiffness: 100 }), [-400, 400], [-10, 10]);
 
     const channelRef = useRef<any>(null);
-    const chatEndRef = useRef<HTMLDivElement>(null);
-    const bubbleRefsMap = useRef<Map<any, HTMLDivElement>>(new Map());
+    const chatContainerRef = useRef<HTMLDivElement>(null);
     const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
     const userId = useRef(Math.random().toString(36).substr(2, 9));
 
@@ -206,7 +199,7 @@ const RadioDasMaes = () => {
         }
     };
 
-    useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
+    useEffect(() => { if (chatContainerRef.current) { chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight; } }, [chatMessages]);
 
     return (
         <div className="w-full max-w-7xl mx-auto h-[calc(100vh-60px)] flex flex-col p-2 overflow-hidden bg-transparent">
@@ -214,7 +207,7 @@ const RadioDasMaes = () => {
             <AnimatePresence> {petals.map(id => <Petal key={id} id={id} onDone={() => setPetals(v => v.filter(x => x !== id))} />)} </AnimatePresence>
 
             {/* Header */}
-            <div className="flex flex-row items-center justify-between gap-4 mb-2 bg-white/30 backdrop-blur-3xl p-3 px-6 rounded-[2.5rem] border border-white/50 shadow-xl shrink-0">
+            <div className="flex flex-row items-center justify-between gap-4 mb-2 bg-white/30 backdrop-blur-3xl p-3 px-6 rounded-[2.5rem] border border-white/50 shadow-xl shrink-0 z-[100]">
                 <div className="flex items-center gap-2">
                     <div className="w-10 h-10 bg-pink-500 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3"><Radio size={18} /></div>
                     <div className="flex flex-col"><span className="text-[10px] font-black text-pink-500 uppercase tracking-widest leading-none">Almas Atípicas</span><h1 className="text-xl font-black text-gray-800 leading-none">Rádio das Mães</h1></div>
@@ -232,14 +225,14 @@ const RadioDasMaes = () => {
                         <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 min-h-[520px] rounded-[3.5rem] overflow-hidden shadow-2xl border-2 border-white/10 relative bg-black perspective-[1000px]">
                             <div className="absolute inset-0 bg-gradient-radial from-[#1e0a16] via-[#0d040a] to-[#050103] opacity-90" />
                             
-                            {/* OVERLAY CHAT (Inside Stage, Left) */}
+                            {/* OVERLAY CHAT */}
                             <div className="absolute left-8 top-20 bottom-8 w-[320px] bg-black/20 backdrop-blur-xl rounded-[2.5rem] border border-white/10 z-50 flex flex-col overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
                                 <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
                                     <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Acolhimentos Ao Vivo</span>
                                     <div className="flex gap-1"> <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" /> </div>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar custom-scrollbar">
-                                    {chatMessages.length === 0 && <div className="h-full flex flex-col items-center justify-center gap-2 opacity-20"><MessageCircle size={32} className="text-white" /><span className="text-[9px] font-black text-white uppercase text-center px-6">O chat está em silêncio... Envie seu acolhimento abaixo.</span></div>}
+                                <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar custom-scrollbar">
+                                    {chatMessages.length === 0 && <div className="h-full flex flex-col items-center justify-center gap-2 opacity-20"><MessageCircle size={32} className="text-white" /><span className="text-[9px] font-black text-white uppercase text-center px-6">O chat está em silêncio...</span></div>}
                                     {chatMessages.map(m => (
                                         <motion.div key={m.id} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col gap-1">
                                             <span className="text-[10px] font-black text-pink-400 truncate">{m.name}</span>
@@ -253,7 +246,6 @@ const RadioDasMaes = () => {
                                             </div>
                                         </motion.div>
                                     ))}
-                                    <div ref={chatEndRef} />
                                 </div>
                             </div>
 
@@ -272,13 +264,13 @@ const RadioDasMaes = () => {
                                 </div>
                             </motion.div>
                             
-                            <div className="absolute top-6 left-8 flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 z-[60]"> <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> <span className="text-[10px] font-black text-white uppercase tracking-widest">{participants.length} On-line</span> </div>
+                            <div className="absolute top-6 left-8 flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 z-[60]"> <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> <span className="text-[10px] font-black text-white uppercase">{participants.length} On-line</span> </div>
                             <div className="absolute right-6 top-6 z-[60]">
                                 <button onClick={toggleAmbientMusic} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:scale-110`}> {isAmbientAudioActive ? <Pause size={20} /> : <Play size={20} />} </button>
                             </div>
                         </div>
 
-                        {/* Slim Control Bar */}
+                        {/* Control Bar */}
                         <div className="bg-white/30 backdrop-blur-3xl rounded-[3rem] border border-white/60 p-3 px-4 flex flex-col gap-3 shadow-2xl shrink-0">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="flex gap-2 p-1 bg-black/5 rounded-2xl border border-black/5">
@@ -302,7 +294,7 @@ const RadioDasMaes = () => {
                 ) : (
                     /* Mural */
                     <motion.div key="mural-layout" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col gap-6 p-4 bg-pink-100/30 rounded-[3rem] border border-white/80 overflow-hidden relative">
-                        <div className="flex flex-col gap-2 relative z-20"> <h2 className="text-3xl font-black text-gray-900 leading-tight">Mural de <span className="text-pink-500 italic">Desabafos</span></h2> <p className="text-sm text-gray-500 font-bold flex items-center gap-2"><Sparkles size={16} className="text-pink-400" /> Pendure sua voz aqui.</p> </div>
+                         <div className="flex flex-col gap-2 relative z-20"> <h2 className="text-3xl font-black text-gray-900 leading-tight">Mural de <span className="text-pink-500 italic">Desabafos</span></h2> <p className="text-sm text-gray-500 font-bold flex items-center gap-2"><Sparkles size={16} className="text-pink-400" /> Pendure sua voz aqui.</p> </div>
                         <div className="flex-1 overflow-y-auto no-scrollbar pt-6 pb-20 relative z-20">
                              {desabafos.length === 0 ? ( <div className="flex flex-col items-center justify-center h-full gap-6 opacity-30 select-none"><div className="w-40 h-40 bg-pink-200 rounded-full flex items-center justify-center text-7xl">🍃</div><p className="text-xl font-black text-pink-900 uppercase">O mural está em silêncio...</p></div> ) : ( <div className="flex flex-wrap justify-center gap-8 px-4"> {desabafos.map(d => ( <MuralCard key={d.id} card={d} onPlay={(audio: string) => { if (!hasJoinedLive) joinSocialRoom(); new Audio(audio).play(); }} /> ))} </div> )}
                         </div>
