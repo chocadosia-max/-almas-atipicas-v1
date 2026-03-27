@@ -245,7 +245,7 @@ const RadioDasMaes = () => {
   }, [chatMessages]);
 
   return (
-    <div className="w-full max-w-6xl mx-auto h-[calc(100vh-100px)] flex flex-col pt-2 pb-6 px-4 overflow-hidden bg-transparent">
+    <div className="w-full max-w-7xl mx-auto h-[calc(100vh-70px)] flex flex-col p-2 overflow-hidden bg-transparent">
       <AnimatePresence>
         {heartParticles.map(p => ( <motion.span key={p.id} initial={{ x: p.startX, y: p.startY, opacity: 1, scale: 1.5 }} animate={{ x: p.startX + (Math.random()-0.5)*200, y: p.startY - 200, opacity: 0, scale: 0.5 }} transition={{ duration: 1.8 }} className="fixed pointer-events-none select-none text-3xl z-[9999]" style={{ left: 0, top: 0 }}>❤️</motion.span> ))}
         {petals.map(id => <Petal key={id} id={id} onDone={() => setPetals(v => v.filter(x => x !== id))} />)}
@@ -269,7 +269,7 @@ const RadioDasMaes = () => {
                <button onClick={toggleAmbientMusic} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isAmbientAudioActive ? 'bg-pink-500 text-white shadow-lg scale-110 shadow-pink-500/40' : 'bg-white/80 text-gray-400 shadow-sm'}`}> <Music size={18} className={isAmbientAudioActive ? 'animate-pulse' : ''} /> </button>
             </div>
 
-            <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 relative bg-black perspective-[1000px]">
+            <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-[2] min-h-[460px] rounded-[3rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border-2 border-white/10 relative bg-black perspective-[1000px]">
               <div className="absolute inset-0 bg-gradient-radial from-[#1e0a16] via-[#0d040a] to-[#050103] opacity-80" />
               <motion.div style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }} className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
                 <div className="absolute inset-0 pointer-events-auto">
