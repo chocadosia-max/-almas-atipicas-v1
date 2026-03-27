@@ -33,31 +33,11 @@ const Firefly = () => {
     );
 };
 
-/* ─── Floating Message Component ─── */
-const FloatingMessage = ({ msg, onDone }: any) => {
-    const randomX = useMemo(() => 20 + Math.random() * 60, []);
-    const randomY = useMemo(() => 20 + Math.random() * 60, []);
-    useEffect(() => { const t = setTimeout(onDone, 5000); return () => clearTimeout(t); }, []); // eslint-disable-line
-    return (
-        <motion.div
-            initial={{ scale: 0, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.5, opacity: 0, y: -40 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="absolute z-50 pointer-events-none px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl flex flex-col items-center gap-1"
-            style={{ left: `${randomX}%`, top: `${randomY}%`, transform: 'translate(-50%, -50%)' }}
-        >
-            <span className="text-[10px] font-black text-pink-400 uppercase tracking-tighter">{msg.name}</span>
-            <span className="text-white text-sm font-bold text-center drop-shadow-md">{msg.text}</span>
-            {msg.audio && <div className="mt-1 flex items-center gap-1 text-[8px] text-white/50 animate-pulse"><Volume2 size={10} /> ÁUDIO...</div>}
-        </motion.div>
-    );
-};
-
 /* ─── Bubble Component ─── */
 const FloatingBubble = ({ participant, index, total, isSelected, isReceivingHeart, isHugging, onClick, onBubbleRef }: any) => {
     const angle = (index / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
-    const cx = isHugging ? 50 + Math.cos(angle) * 10 : 50 + Math.cos(angle) * 35;
+    // Shift bubbles more to the right to avoid overlapping with left chat
+    const cx = isHugging ? 60 + Math.cos(angle) * 10 : 65 + Math.cos(angle) * 25;
     const cy = isHugging ? 45 + Math.sin(angle) * 8 : 45 + Math.sin(angle) * 28;
     const hearts = Number(participant.hearts) || 0;
     const heartScale = Math.min(1 + hearts * 0.1, MAX_BUBBLE_SCALE);
@@ -112,11 +92,10 @@ const RadioDasMaes = () => {
     const [hasJoinedLive, setHasJoinedLive] = useState(false);
     const [participants, setParticipants] = useState<any[]>([]);
     const [selectedTargetId, setSelectedTargetId] = useState<any>(null);
-    const [heartParticles, setHeartParticles] = useState<any[]>([]);
     const [receivingHeartId, setReceivingHeartId] = useState<any>(null);
     
-    // Floating messages on Stage
-    const [activeMessages, setActiveMessages] = useState<any[]>([]);
+    // Chat List
+    const [chatMessages, setChatMessages] = useState<any[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [heartsSent, setHeartsSent] = useState<Set<string>>(new Set());
     const [isHugging, setIsHugging] = useState(false);
@@ -128,6 +107,7 @@ const RadioDasMaes = () => {
     const rotateY = useTransform(useSpring(mouseX, { damping: 20, stiffness: 100 }), [-400, 400], [-10, 10]);
 
     const channelRef = useRef<any>(null);
+    const chatEndRef = useRef<HTMLDivElement>(null);
     const bubbleRefsMap = useRef<Map<any, HTMLDivElement>>(new Map());
     const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
     const userId = useRef(Math.random().toString(36).substr(2, 9));
@@ -159,9 +139,7 @@ const RadioDasMaes = () => {
              const users = Object.keys(state).map(k => ({ ...(state[k] as any)[0], id: k, isMe: k === userId.current })).filter(Boolean);
              setParticipants(users);
           })
-          .on('broadcast', { event: 'chat-msg' }, ({ payload }) => {
-             setActiveMessages(prev => [...prev, payload]);
-          })
+          .on('broadcast', { event: 'chat-msg' }, ({ payload }) => setChatMessages(prev => [...prev.slice(-49), payload]))
           .on('broadcast', { event: 'mural-pinned' }, ({ payload }) => {
              setDesabafos(prev => {
                 const updated = [payload, ...prev].slice(0, 20);
@@ -175,7 +153,7 @@ const RadioDasMaes = () => {
             setParticipants(prev => prev.map(p => p.id === payload.targetId ? { ...p, hearts: (p.hearts || 0) + 1 } : p));
           })
           .on('broadcast', { event: 'audio-msg' }, ({ payload }) => {
-             setActiveMessages(prev => [...prev, payload]);
+             setChatMessages(prev => [...prev.slice(-49), payload]);
              new Audio(payload.audio).play().catch(() => {});
           })
           .subscribe(async (status) => { if (status === 'SUBSCRIBED') await channel.track({ name: myName, emoji: myEmoji, hearts: 0, mood: null }); });
@@ -187,7 +165,7 @@ const RadioDasMaes = () => {
         if (!hasJoinedLive) joinSocialRoom();
         const msg = { id: Math.random().toString(), name: myName, text: chatInput.trim() };
         channelRef.current?.send({ type: 'broadcast', event: 'chat-msg', payload: msg });
-        setActiveMessages(prev => [...prev, msg]); setChatInput('');
+        setChatMessages(prev => [...prev.slice(-49), msg]); setChatInput('');
     };
 
     const handleSendHeart = () => {
@@ -213,8 +191,8 @@ const RadioDasMaes = () => {
               const r = new FileReader(); r.readAsDataURL(b); r.onloadend = () => {
                 const b64 = r.result as string; 
                 if (activeTab === 'podcast') {
-                   channelRef.current?.send({ type: 'broadcast', event: 'audio-msg', payload: { id: userId.current, name: myName, audio: b64, text: 'Enviou uma nota de voz' } });
-                   setActiveMessages(prev => [...prev, { id: Math.random().toString(), name: myName, audio: b64, text: 'Enviou uma nota de voz' }]);
+                   channelRef.current?.send({ type: 'broadcast', event: 'audio-msg', payload: { id: userId.current, name: myName, audio: b64, text: 'Enviou uma nota de voz 🎙️' } });
+                   setChatMessages(prev => [...prev.slice(-49), { id: Math.random().toString(), name: myName, audio: b64, text: 'Enviou uma nota de voz 🎙️' }]);
                 } else {
                    const newCard = { id: Date.now().toString(), author: myName, audioData: b64, time: 'Agora' };
                    channelRef.current?.send({ type: 'broadcast', event: 'mural-pinned', payload: newCard });
@@ -228,9 +206,11 @@ const RadioDasMaes = () => {
         }
     };
 
+    useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
+
     return (
         <div className="w-full max-w-7xl mx-auto h-[calc(100vh-60px)] flex flex-col p-2 overflow-hidden bg-transparent">
-            {/* Stage Partials */}
+            {/* Particles */}
             <AnimatePresence> {petals.map(id => <Petal key={id} id={id} onDone={() => setPetals(v => v.filter(x => x !== id))} />)} </AnimatePresence>
 
             {/* Header */}
@@ -247,20 +227,37 @@ const RadioDasMaes = () => {
 
             <AnimatePresence mode="wait">
                 {activeTab === 'podcast' ? (
-                    <motion.div key="stage-layout" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col gap-2 min-h-0 relative">
-                        {/* Interactive Stage - TAKES UP MOST SPACE */}
-                        <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 min-h-[460px] rounded-[3.5rem] overflow-hidden shadow-2xl border-2 border-white/10 relative bg-black perspective-[1000px]">
+                    <motion.div key="social-stage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col gap-2 min-h-0 relative">
+                        {/* Interactive Stage */}
+                        <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 min-h-[520px] rounded-[3.5rem] overflow-hidden shadow-2xl border-2 border-white/10 relative bg-black perspective-[1000px]">
                             <div className="absolute inset-0 bg-gradient-radial from-[#1e0a16] via-[#0d040a] to-[#050103] opacity-90" />
                             
-                            {/* Floating Messages Layer */}
-                            <div className="absolute inset-0 z-40 overflow-hidden pointer-events-none">
-                                <AnimatePresence>
-                                    {activeMessages.map(m => (
-                                        <FloatingMessage key={m.id} msg={m} onDone={() => setActiveMessages(prev => prev.filter(x => x.id !== m.id))} />
+                            {/* OVERLAY CHAT (Inside Stage, Left) */}
+                            <div className="absolute left-8 top-20 bottom-8 w-[320px] bg-black/20 backdrop-blur-xl rounded-[2.5rem] border border-white/10 z-50 flex flex-col overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+                                <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Acolhimentos Ao Vivo</span>
+                                    <div className="flex gap-1"> <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" /> </div>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar custom-scrollbar">
+                                    {chatMessages.length === 0 && <div className="h-full flex flex-col items-center justify-center gap-2 opacity-20"><MessageCircle size={32} className="text-white" /><span className="text-[9px] font-black text-white uppercase text-center px-6">O chat está em silêncio... Envie seu acolhimento abaixo.</span></div>}
+                                    {chatMessages.map(m => (
+                                        <motion.div key={m.id} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col gap-1">
+                                            <span className="text-[10px] font-black text-pink-400 truncate">{m.name}</span>
+                                            <div className="bg-white/5 p-3 rounded-2xl rounded-tl-none border border-white/5">
+                                                <p className="text-white/90 text-[12px] font-medium leading-snug break-words">{m.text}</p>
+                                                {m.audio && (
+                                                    <button onClick={() => new Audio(m.audio).play()} className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-pink-500/20 border border-pink-500/30 rounded-full text-[9px] text-pink-300 font-black uppercase hover:bg-pink-500/40 transition-all">
+                                                        <Volume2 size={12} /> Ouvir Áudio
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </motion.div>
                                     ))}
-                                </AnimatePresence>
+                                    <div ref={chatEndRef} />
+                                </div>
                             </div>
 
+                            {/* Stage Content */}
                             <motion.div style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }} className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
                                 <div className="absolute inset-0 pointer-events-auto">
                                     {hasJoinedLive && Array.from({ length: 15 }).map((_, i) => <Firefly key={i} />)}
@@ -274,29 +271,30 @@ const RadioDasMaes = () => {
                                     )}
                                 </div>
                             </motion.div>
-                            <div className="absolute top-6 left-8 flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10"> <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_green]" /> <span className="text-[10px] font-black text-white uppercase tracking-widest">{participants.length} Almas On-line</span> </div>
-                            <div className="absolute right-6 top-6">
+                            
+                            <div className="absolute top-6 left-8 flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 z-[60]"> <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> <span className="text-[10px] font-black text-white uppercase tracking-widest">{participants.length} On-line</span> </div>
+                            <div className="absolute right-6 top-6 z-[60]">
                                 <button onClick={toggleAmbientMusic} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:scale-110`}> {isAmbientAudioActive ? <Pause size={20} /> : <Play size={20} />} </button>
                             </div>
                         </div>
 
-                        {/* Control Hub - MUCH SLIMMER NOW */}
-                        <div className="bg-white/30 backdrop-blur-3xl rounded-[3rem] border border-white/60 p-4 flex flex-col gap-4 shadow-2xl shrink-0">
-                            <div className="flex items-center justify-between">
+                        {/* Slim Control Bar */}
+                        <div className="bg-white/30 backdrop-blur-3xl rounded-[3rem] border border-white/60 p-3 px-4 flex flex-col gap-3 shadow-2xl shrink-0">
+                            <div className="flex items-center justify-between gap-4">
                                 <div className="flex gap-2 p-1 bg-black/5 rounded-2xl border border-black/5">
-                                    <button onClick={() => { if (!hasJoinedLive) joinSocialRoom(); channelRef.current?.send({ type: 'broadcast', event: 'group-hug' }); setIsHugging(true); setTimeout(() => setIsHugging(false), 3500); }} className="px-5 py-2 hover:bg-white rounded-xl text-[10px] font-black text-gray-500 hover:text-pink-600 transition-all flex items-center gap-2"><Users size={14} /> ABRAÇO</button>
-                                    <button onClick={() => { if (!hasJoinedLive) joinSocialRoom(); channelRef.current?.send({ type: 'broadcast', event: 'petal-rain' }); setPetals(Array.from({ length: 40 }, (_, i) => Date.now() + i)); }} className="px-5 py-2 hover:bg-white rounded-xl text-[10px] font-black text-gray-500 hover:text-pink-400 transition-all flex items-center gap-2"><Leaf size={14} /> PÉTALAS</button>
+                                    <button onClick={() => { if (!hasJoinedLive) joinSocialRoom(); channelRef.current?.send({ type: 'broadcast', event: 'group-hug' }); setIsHugging(true); setTimeout(() => setIsHugging(false), 3500); }} className="px-4 py-2 hover:bg-white rounded-xl text-[10px] font-black text-gray-500 hover:text-pink-600 transition-all flex items-center gap-2"><Users size={14} /> ABRAÇO</button>
+                                    <button onClick={() => { if (!hasJoinedLive) joinSocialRoom(); channelRef.current?.send({ type: 'broadcast', event: 'petal-rain' }); setPetals(Array.from({ length: 40 }, (_, i) => Date.now() + i)); }} className="px-4 py-2 hover:bg-white rounded-xl text-[10px] font-black text-gray-500 hover:text-pink-400 transition-all flex items-center gap-2"><Leaf size={14} /> PÉTALAS</button>
                                 </div>
-                                <div className="flex gap-1.5 px-3 py-1.5 bg-white/30 rounded-2xl"> {moodEmojis.map(m => ( <button key={m} onClick={() => { if (!hasJoinedLive) joinSocialRoom(); channelRef.current?.send({ type: 'broadcast', event: 'update-mood', payload: { userId: userId.current, emoji: m } }); setParticipants(prev => prev.map(p => p.isMe ? { ...p, mood: m } : p)); }} className="w-8 h-8 flex items-center justify-center hover:scale-150 transition-all text-sm">{m}</button> ))} </div>
-                            </div>
-                            <div className="flex gap-4 items-center">
-                                <div className="flex-1 flex items-center bg-white/60 rounded-[2.5rem] px-2 py-1.5 border border-white focus-within:ring-4 ring-pink-500/10 transition-all shadow-xl">
-                                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Palavras que acolhem..." className="flex-1 bg-transparent px-6 py-2 text-sm text-gray-800 placeholder:text-gray-400 outline-none font-black" />
-                                    <button onClick={handleSendMessage} className="w-12 h-12 bg-pink-500 rounded-2xl flex items-center justify-center text-white mr-1 hover:scale-110 active:scale-95 transition-all"><Send size={20} /></button>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button onClick={handleSendHeart} disabled={!selectedTargetId} className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl ${selectedTargetId ? 'bg-white text-pink-500 scale-105' : 'bg-gray-100 opacity-50'}`}><Heart size={28} fill={selectedTargetId ? "currentColor" : "none"} /></button>
-                                    <button onClick={toggleRecording} className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isRecordingMsg ? 'bg-red-500 animate-pulse text-white' : 'bg-pink-600 text-white hover:scale-105'}`}>{isRecordingMsg ? <StopCircle size={24} /> : <Mic size={24} />}</button>
+                                <div className="flex-1 flex gap-1.5 px-3 py-1.5 bg-white/30 rounded-2xl overflow-x-auto no-scrollbar justify-center"> {moodEmojis.map(m => ( <button key={m} onClick={() => { if (!hasJoinedLive) joinSocialRoom(); channelRef.current?.send({ type: 'broadcast', event: 'update-mood', payload: { userId: userId.current, emoji: m } }); setParticipants(prev => prev.map(p => p.isMe ? { ...p, mood: m } : p)); }} className="w-7 h-7 flex items-center justify-center hover:scale-150 transition-all text-sm">{m}</button> ))} </div>
+                                <div className="flex gap-4 items-center">
+                                    <div className="w-[480px] flex items-center bg-white/60 rounded-[2.5rem] px-2 py-1 border border-white focus-within:ring-4 ring-pink-500/10 transition-all shadow-xl">
+                                        <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Sua voz acolhe aqui..." className="flex-1 bg-transparent px-6 py-2 text-sm text-gray-800 placeholder:text-gray-400 outline-none font-black" />
+                                        <button onClick={handleSendMessage} className="w-10 h-10 bg-pink-500 rounded-2xl flex items-center justify-center text-white mr-1 hover:scale-110 active:scale-95 transition-all"><Send size={18} /></button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={handleSendHeart} disabled={!selectedTargetId} className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl ${selectedTargetId ? 'bg-white text-pink-500 scale-105' : 'bg-gray-100 opacity-50'}`}><Heart size={24} fill={selectedTargetId ? "currentColor" : "none"} /></button>
+                                        <button onClick={toggleRecording} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl ${isRecordingMsg ? 'bg-red-500 animate-pulse text-white' : 'bg-pink-600 text-white hover:scale-105'}`}>{isRecordingMsg ? <StopCircle size={22} /> : <Mic size={22} />}</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
