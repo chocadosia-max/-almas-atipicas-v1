@@ -46,7 +46,7 @@ const MomentoPausa = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Admin Upload State
@@ -81,9 +81,9 @@ const MomentoPausa = () => {
   useEffect(() => {
     if (audios.length > 0 && audioRef.current) {
       audioRef.current.load();
-      if (isPlaying) audioRef.current.play().catch(() => {});
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     }
-  }, [currentAudioIndex]);
+  }, [currentAudioIndex, audios]);
 
   // Efeitos de Modo
   useEffect(() => {
