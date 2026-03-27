@@ -171,7 +171,7 @@ const RadioDasMaes = () => {
 
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = 'https://meet.jit.si/external_api.js';
+    script.src = 'https://meet.ffmuc.net/external_api.js';
     script.async = true;
     document.body.appendChild(script);
     return () => { document.body.removeChild(script); };
@@ -194,7 +194,7 @@ const RadioDasMaes = () => {
     }
     setIsJoiningLive(true);
     try {
-      const domain = 'meet.jit.si';
+      const domain = 'meet.ffmuc.net';
       const options = {
         roomName: 'AlmasAtipicas_Radio_Live_Acolhimento',
         width: '100%',
@@ -269,6 +269,11 @@ const RadioDasMaes = () => {
     toast.success('Você saiu da sala.');
   };
 
+  const handleSelectParticipant = (p: any) => {
+    if (p.isMe) { toast.info('Não pode enviar coração para si mesma! 😄'); return; }
+    setSelectedTargetId((prev: any) => prev === p.id ? null : p.id);
+  };
+
   const triggerHeartVisuals = (targetId: any) => {
     const target = participants.find(p => p.id === targetId);
     if (!target) return;
@@ -334,6 +339,30 @@ const RadioDasMaes = () => {
       const d = { id: Date.now(), author: myName, city: 'Seguro', content: '', likes: 0, time: 'Agora', duration: '00:00', audioData: r.result, isUserAuthor: true };
       await saveDesabafoToDB(d); setDesabafos([d, ...desabafos]); setIsUploading(false); setAudioBlob(null); toast.success('Postado!');
     };
+  };
+
+  const handlePlayFeedAudio = (d: any) => {
+    if (playingFeedId === d.id) { audioFeedRef.current?.pause(); setPlayingFeedId(null); return; }
+    audioFeedRef.current?.pause();
+    if (d.audioData) {
+      const a = new Audio(d.audioData); a.onended = () => setPlayingFeedId(null); a.play(); audioFeedRef.current = a; setPlayingFeedId(d.id);
+    } else { toast.error('Áudio não encontrado.'); }
+  };
+
+  const handleDeleteDesabafo = async (id: number) => {
+    if (playingFeedId === id) { audioFeedRef.current?.pause(); setPlayingFeedId(null); }
+    await deleteDesabafoFromDB(id); setDesabafos(prev => prev.filter(d => d.id !== id));
+    toast.success('Deletado.');
+  };
+
+  const handleApoiar = (id: number) => {
+    setDesabafos(prev => prev.map(d => {
+      if (d.id !== id) return d;
+      if (d.hasLiked) { toast.info('Já apoiou esta mãe.'); return d; }
+      toast.success('Abraço de apoio enviado! 🫂');
+      const novo = { ...d, likes: (d.likes || 0) + 1, hasLiked: true };
+      saveDesabafoToDB(novo); return novo;
+    }));
   };
 
   return (
