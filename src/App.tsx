@@ -57,30 +57,29 @@ const PageWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 const LegalFooter = () => (
-  <div className="w-full mt-12 bg-gray-900 border-t-4 border-[var(--rosa-forte)] text-gray-300 p-6 md:p-8 rounded-t-3xl shadow-2xl relative z-50">
-    <div className="max-w-6xl mx-auto text-sm md:text-base leading-relaxed flex flex-col md:flex-row gap-6 md:gap-12 items-center text-center md:text-left">
-      <div className="flex-1">
-        <h4 className="text-[var(--rosa-forte)] font-bold text-lg mb-2 flex items-center justify-center md:justify-start gap-2">
-          <span className="bg-[var(--rosa-forte)]/20 p-1.5 rounded-md">⚖️</span>
-          Aviso Legal & LGPD
-        </h4>
-        <p className="mb-3">
-          A plataforma <strong className="text-white">Comigo (Almas Atípicas)</strong> oferece acolhimento e dados informativos, atuando como facilitadora tecnológica.
-        </p>
-        <p className="text-xs md:text-sm text-gray-400">
-          <strong className="text-amber-400">ISENÇÃO DE RESPONSABILIDADE MÉDICA:</strong> Nenhum conteúdo interativo (IA, Ebooks, Checklists) ou relato da comunidade substitui o aconselhamento, diagnóstico ou prescrição de médicos neuropediatras, psicólogos ou terapeutas habilitados. Siga sempre as orientações dos profissionais que acompanham seu filho.
+  <div className="w-full mt-10 border-t border-[var(--rosa-medio)]/20 bg-white/40 backdrop-blur-md relative z-50">
+    <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      {/* Legal text — compact */}
+      <div className="flex items-start gap-2.5 flex-1">
+        <span className="text-base shrink-0 mt-0.5 opacity-70">⚖️</span>
+        <p className="text-[11px] text-[var(--texto-claro)] leading-relaxed">
+          <span className="font-black text-[var(--rosa-forte)]">Almas Atípicas</span> oferece acolhimento e dados informativos.{' '}
+          <span className="font-bold text-amber-500/80">Aviso médico:</span>{' '}
+          nenhum conteúdo substitui orientação de neuropediatras, psicólogos ou terapeutas habilitados.
         </p>
       </div>
-      <div className="flex flex-col gap-3 min-w-[200px]">
-        <button 
-          onClick={() => window.location.href = '/termos'} 
-          className="w-full px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl border border-gray-700 hover:border-gray-500 font-medium transition-all shadow-md text-sm whitespace-nowrap"
+
+      {/* Right side: link + copyright */}
+      <div className="flex items-center gap-4 shrink-0">
+        <button
+          onClick={() => window.location.href = '/termos'}
+          className="text-[11px] font-bold text-[var(--rosa-forte)] hover:underline underline-offset-2 transition-all opacity-80 hover:opacity-100 whitespace-nowrap"
         >
-          Ler Termos de Uso
+          Termos de Uso →
         </button>
-        <div className="text-xs text-center text-gray-500 mt-2">
-          © 2026 Plataforma Comigo.<br/>Todos os direitos reservados.
-        </div>
+        <span className="text-[10px] text-[var(--texto-claro)] opacity-40 whitespace-nowrap">
+          © 2026 Almas Atípicas
+        </span>
       </div>
     </div>
   </div>
