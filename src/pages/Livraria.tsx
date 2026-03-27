@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Book, Download, Eye, X, Star, Sparkles } from 'lucide-react';
+import { Book, Download, X, Star, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import EbookLutoReader from '../components/EbookLutoReader';
 
 const CATEGORIAS = ['Todos', 'Direitos', 'Rotinas', 'Autocuidado', 'Comportamento', 'Inclusão'];
 
-const EbookOLutoQueNinguemFala = () => {
-  return (
-    <div className="w-full h-full min-h-[500px] md:min-h-[600px] border-0 rounded-2xl overflow-hidden relative shadow-[0_0_50px_rgba(201,169,110,0.3)]">
-      <iframe 
-        src="/ebook-luto-que-ninguem-fala.html" 
-        className="w-full h-full min-h-[500px] md:min-h-[600px] border-0"
-        title="O Luto que Ninguém Fala - Ebook"
-      />
-    </div>
-  );
-};
+const EbookOLutoQueNinguemFala = () => (
+  <div className="w-full rounded-3xl overflow-hidden p-4 md:p-8" style={{ background: 'linear-gradient(160deg,#1a0e08,#2e1810,#1a0e08)' }}>
+    <EbookLutoReader />
+  </div>
+);
 
 const Livraria = () => {
   const [filtroCat, setFiltroCat] = useState('Todos');
