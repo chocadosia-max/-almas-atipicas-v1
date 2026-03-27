@@ -78,20 +78,8 @@ const SidebarContent = () => {
     const inviteLink = `https://almas-atipicas-v1.pages.dev/login?invite=ACOLHER26`;
     const mensagem = `🌸 Olá! Venha fazer parte da Plataforma Comigo (Almas Atípicas), uma rede de apoio incrível para mães.\n\nClique no meu link VIP abaixo para criar sua conta gratuita (o código de acesso já vai preenchido):\n\n${inviteLink}`;
     
-    if (navigator.share) {
-      navigator.share({
-        title: 'Convite - Almas Atípicas',
-        text: mensagem
-      }).catch((err) => {
-        if (err.name !== "AbortError") {
-          navigator.clipboard.writeText(mensagem);
-          toast.success("Mensagem de convite copiada!");
-        }
-      });
-    } else {
-      navigator.clipboard.writeText(mensagem);
-      toast.success("Mensagem de convite copiada para a área de transferência!");
-    }
+    navigator.clipboard.writeText(mensagem);
+    toast.success("Mensagem de convite copiada para a área de transferência!");
   };
 
   return (
