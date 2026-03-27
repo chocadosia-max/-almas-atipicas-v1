@@ -1,16 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Headphones, Mic, StopCircle, Send, Trash2, Heart, Share2, Volume2,
-  Loader2, MessageSquarePlus, Radio, Info, PhoneCall, PhoneOff
+  Loader2, MessageSquarePlus, Radio, Info, PhoneCall, PhoneOff, Play, Pause
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from "sonner";
-
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
+import { supabase } from '../integrations/supabase/client';
 
 /* ─── IndexedDB ─── */
 const DB_NAME_RAD = 'AlmasRadioDB';
@@ -98,7 +93,7 @@ const FloatingBubble = ({
       ref={el => onBubbleRef(participant.id, el)}
       initial={{ scale: 0, opacity: 0 }}
       animate={isReceivingHeart
-        ? { scale: [heartScale, heartScale * 1.3, heartScale], opacity: 1, y: [0, -12, 0] }
+        ? { scale: [heartScale, heartScale * 1.3, heartScale], opacity: 1 }
         : { scale: heartScale, opacity: 1, y: [0, -8, 0, 7, 0] }}
       exit={{ scale: 0, opacity: 0 }}
       transition={{ stiffness: 220, damping: 18, y: { duration: 4.5 + index * 0.6, repeat: Infinity, ease: 'easeInOut' } }}
@@ -111,17 +106,23 @@ const FloatingBubble = ({
           className="absolute rounded-full border-2 border-pink-400"
           style={{ width: bubblePx + 16, height: bubblePx + 16, top: -8, left: -8 }} />
       )}
-      {participant.speaking && (
-        <motion.div animate={{ scale: [1, 1.9, 1], opacity: [0.4, 0, 0.4] }} transition={{ duration: 0.9, repeat: Infinity }}
-          className="absolute rounded-full bg-pink-400/40" style={{ width: bubblePx + 16, height: bubblePx + 16, top: -8, left: -8 }} />
+      
+      {/* Audio pulse effect when bubble "sends" audio */}
+      {participant.playingAudio && (
+        <motion.div animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 0.6, repeat: Infinity }}
+          className="absolute rounded-full bg-pink-400/50" style={{ width: bubblePx + 20, height: bubblePx + 20, top: -10, left: -10 }} />
       )}
+
       <motion.div animate={{ width: bubblePx, height: bubblePx }} transition={{ type: 'spring' }}
-        className="rounded-full bg-gradient-to-br from-pink-300/80 to-rose-500/60 flex items-center justify-center shadow-2xl border-4 border-white/30 ring-2 ring-pink-400/20 overflow-hidden"
+        className="rounded-full bg-gradient-to-br from-pink-300/80 to-rose-500/60 flex items-center justify-center shadow-2xl border-4 border-white/30 ring-2 ring-pink-400/20 overflow-hidden relative"
         style={{ fontSize: Math.round(bubblePx * 0.4) }}>
         {participant.emoji || '🌸'}
+        {participant.hasUnplayedAudio && (
+           <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white rounded-full animate-bounce" />
+        )}
       </motion.div>
       <span className="text-[9px] font-black text-white/80 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full truncate max-w-[78px]">
-        {participant.isMe ? `${participant.name} (você)` : participant.name}
+        {participant.isMe ? `${participant.name}` : participant.name}
       </span>
       {(participant.hearts || 0) > 0 && (
         <span className="text-[9px] font-black text-white bg-pink-500 px-1.5 py-0.5 rounded-full -mt-1 shadow">{participant.hearts} ❤️</span>
@@ -147,35 +148,30 @@ const RadioDasMaes = () => {
     });
   }, []);
 
-  /* ── Jitsi Live state ── */
+  /* ── Room state ── */
   const [hasJoinedLive, setHasJoinedLive] = useState(false);
-  const [isJoiningLive, setIsJoiningLive] = useState(false);
   const [participants, setParticipants] = useState<any[]>([]);
   const [selectedTargetId, setSelectedTargetId] = useState<any>(null);
   const [heartParticles, setHeartParticles] = useState<any[]>([]);
   const [scorePopups, setScorePopups] = useState<any[]>([]);
   const [receivingHeartId, setReceivingHeartId] = useState<any>(null);
-  const [chatMessages, setChatMessages] = useState<{ id: number; name: string; text: string }[]>([]);
+  const [chatMessages, setChatMessages] = useState<{ id: string; name: string; text?: string; audio?: string }[]>([]);
   const [chatInput, setChatInput] = useState('');
-  const [micLevel, setMicLevel] = useState(0);
+  
+  const [isRecordingMsg, setIsRecordingMsg] = useState(false);
+  const [recordedMsgBlob, setRecordedMsgBlob] = useState<Blob | null>(null);
 
-  const jitsiApiRef = useRef<any>(null);
-  const jitsiContainerRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<any>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const bubbleRefsMap = useRef<Map<any, HTMLDivElement>>(new Map());
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const [myName] = useState(() => {
     try { const p = localStorage.getItem('almas_empreendedora_profile'); return p ? JSON.parse(p).nomeEmpreendedora || 'Mãe' : 'Mãe'; } catch { return 'Mãe'; }
   });
   const [myEmoji] = useState(() => avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)]);
-
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://meet.ffmuc.net/external_api.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => { document.body.removeChild(script); };
-  }, []);
+  const userId = useRef(Math.random().toString(36).substr(2, 9));
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -186,111 +182,51 @@ const RadioDasMaes = () => {
     else bubbleRefsMap.current.delete(id);
   }, []);
 
-  /* ── Jitsi Integration ── */
-  const handleJoinLiveRoom = async () => {
-    if (!window.JitsiMeetExternalAPI) {
-      toast.error('O sistema de áudio está carregando. Tente novamente em alguns segundos.');
-      return;
-    }
-    setIsJoiningLive(true);
+  /* ── Real-time Sync ── */
+  const joinSocialRoom = () => {
+    setHasJoinedLive(true);
     
-    // Safety timeout: if after 15s we haven't joined, reset state
-    const timeout = setTimeout(() => {
-      if (!hasJoinedLive && isJoiningLive) {
-        setIsJoiningLive(false);
-        toast.error('A conexão demorou muito. Verifique sua internet ou tente novamente.');
-        jitsiApiRef.current?.dispose();
-      }
-    }, 15000);
+    const channel = supabase.channel('radio-social-room', {
+      config: { presence: { key: userId.current } }
+    });
 
-    try {
-      const domain = 'meet.ffmuc.net';
-      const options = {
-        roomName: 'AlmasAtipicas_Radio_Live_Acolhimento_Imersivo',
-        width: '100%',
-        height: '100%',
-        parentNode: jitsiContainerRef.current,
-        userInfo: { displayName: `${myName}|${myEmoji}` },
-        configOverwrite: {
-          startWithAudioMuted: false,
-          startWithVideoMuted: true,
-          prejoinPageEnabled: false,
-          disableDeepLinking: true,
-          enableWelcomePage: false,
-          enableNoAudioDetection: true,
-          hideConferenceTimer: true,
-          toolbarButtons: []
-        },
-        interfaceConfigOverwrite: {
-          HIDE_INVITE_ON_CONNECTION_MSG: true,
-          RECENT_LIST_ENABLED: false,
-          TOOLBAR_BUTTONS: []
-        }
-      };
-
-      const api = new window.JitsiMeetExternalAPI(domain, options);
-      jitsiApiRef.current = api;
-
-      api.addEventListeners({
-        videoConferenceJoined: (local: any) => {
-          clearTimeout(timeout);
-          setParticipants([{ id: local.id, name: myName, emoji: myEmoji, speaking: false, isMe: true, hearts: 0 }]);
-          setHasJoinedLive(true);
-          setIsJoiningLive(false);
-          toast.success('🎙️ Conectada à Sala de Apoio!');
-        },
-        participantJoined: (p: any) => {
-          const [name, emoji] = p.displayName?.split('|') || [p.displayName, '🌸'];
-          setParticipants(prev => [...prev.filter(x => x.id !== p.id), { id: p.id, name, emoji, speaking: false, hearts: 0 }]);
-          toast.info(`${name} entrou na sala!`);
-        },
-        participantLeft: (p: any) => {
-          setParticipants(prev => prev.filter(x => x.id !== p.id));
-          if (selectedTargetId === p.id) setSelectedTargetId(null);
-        },
-        endpointTextMessageReceived: (data: any) => {
-          try {
-            const msg = JSON.parse(data.eventData.text);
-            if (msg.type === 'heart' && msg.targetId) {
-              triggerHeartVisuals(msg.targetId);
-            } else if (msg.type === 'chat') {
-              setChatMessages(prev => [...prev, { id: Date.now(), name: msg.name, text: msg.text }]);
-            }
-          } catch (e) { console.error('Data error:', e); }
-        },
-        audioLevelChanged: (data: any) => {
-          setMicLevel(data.audioLevel * 100);
-          setParticipants(prev => prev.map(p => p.isMe ? { ...p, speaking: data.audioLevel > 0.05 } : p));
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const users: any[] = [];
+        Object.keys(state).forEach((key) => {
+          const u = (state[key] as any)[0];
+          users.push({ ...u, id: key, isMe: key === userId.current });
+        });
+        setParticipants(users);
+      })
+      .on('broadcast', { event: 'chat-msg' }, ({ payload }) => {
+        setChatMessages(prev => [...prev, payload]);
+      })
+      .on('broadcast', { event: 'heart-event' }, ({ payload }) => {
+        triggerHeartVisuals(payload.targetId);
+      })
+      .on('broadcast', { event: 'audio-msg' }, ({ payload }) => {
+        setChatMessages(prev => [...prev, payload]);
+        // Visual indicator on sender bubble
+        setParticipants(prev => prev.map(p => p.id === payload.id ? { ...p, hasUnplayedAudio: true } : p));
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ name: myName, emoji: myEmoji, hearts: 0 });
         }
       });
-      
-      // Also listen to conference joined just in case
-      api.addEventListener('conferenceJoined', () => {
-         if (!hasJoinedLive) {
-           clearTimeout(timeout);
-           setHasJoinedLive(true);
-           setIsJoiningLive(false);
-         }
-      });
 
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao iniciar a chamada de áudio.');
-      setIsJoiningLive(false);
-      clearTimeout(timeout);
-    }
+    channelRef.current = channel;
+    toast.success('Entrou na sala interativa! 🌸');
   };
 
-  const handleLeaveLiveRoom = () => {
-    jitsiApiRef.current?.dispose();
-    jitsiApiRef.current = null;
+  const leaveSocialRoom = () => {
+    channelRef.current?.unsubscribe();
     setHasJoinedLive(false);
     setParticipants([]);
-    setSelectedTargetId(null);
-    setHeartParticles([]);
-    setScorePopups([]);
     setChatMessages([]);
-    toast.success('Você saiu da sala.');
+    toast.info('Saiu da sala.');
   };
 
   const triggerHeartVisuals = (targetId: any) => {
@@ -306,65 +242,78 @@ const RadioDasMaes = () => {
     setScorePopups(prev => [...prev, { id: Date.now() + 500, x: ox, y: oy - 20 }]);
     setReceivingHeartId(targetId);
     setTimeout(() => setReceivingHeartId(null), 700);
-    setParticipants(prev => prev.map(p => p.id === targetId ? { ...p, hearts: Math.min((p.hearts || 0) + 1, 20) } : p));
+    setParticipants(prev => prev.map(p => p.id === targetId ? { ...p, hearts: (p.hearts || 0) + 1 } : p));
   };
 
   const handleSendHeart = () => {
     if (!selectedTargetId) { toast.info('Selecione uma bolha primeiro.'); return; }
-    jitsiApiRef.current?.executeCommand('sendEndpointTextMessage', '', JSON.stringify({ type: 'heart', targetId: selectedTargetId }));
+    channelRef.current?.send({ type: 'broadcast', event: 'heart-event', payload: { targetId: selectedTargetId } });
     triggerHeartVisuals(selectedTargetId);
   };
 
   const handleSendMessage = () => {
     if (!chatInput.trim()) return;
-    jitsiApiRef.current?.executeCommand('sendEndpointTextMessage', '', JSON.stringify({ type: 'chat', name: myName, text: chatInput.trim() }));
-    setChatMessages(prev => [...prev, { id: Date.now(), name: myName, text: chatInput.trim() }]);
+    const msg = { id: Math.random().toString(), name: myName, text: chatInput.trim() };
+    channelRef.current?.send({ type: 'broadcast', event: 'chat-msg', payload: msg });
+    setChatMessages(prev => [...prev, msg]);
     setChatInput('');
   };
 
+  /* ── Participant Interaction ── */
   const handleSelectParticipant = (p: any) => {
-    if (p.isMe) { toast.info('Não pode enviar coração para si mesma! 😄'); return; }
+    if (p.isMe) return;
     setSelectedTargetId((prev: any) => prev === p.id ? null : p.id);
   };
 
-  /* ── Audio Recorder ── */
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [playingFeedId, setPlayingFeedId] = useState<number | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const audioFeedRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    let t: any;
-    if (isRecording) t = setInterval(() => setRecordingTime(v => v + 1), 1000);
-    else setRecordingTime(0);
-    return () => clearInterval(t);
-  }, [isRecording]);
-
-  const startRecording = async () => {
+  /* ── Audio Message Recording ── */
+  const startRecordingMsg = async () => {
     try {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(s);
-      mediaRecorderRef.current = mr; chunksRef.current = [];
+      recorderRef.current = mr;
+      chunksRef.current = [];
       mr.ondataavailable = e => e.data.size > 0 && chunksRef.current.push(e.data);
-      mr.onstop = () => { setAudioBlob(new Blob(chunksRef.current, { type: 'audio/webm' })); s.getTracks().forEach(track => track.stop()); };
-      mr.start(); setIsRecording(true);
+      mr.onstop = () => {
+        const b = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setRecordedMsgBlob(b);
+        s.getTracks().forEach(t => t.stop());
+      };
+      mr.start();
+      setIsRecordingMsg(true);
     } catch { toast.error('Microfone negado.'); }
   };
-  const stopRecording = () => { mediaRecorderRef.current?.stop(); setIsRecording(false); };
 
-  const handlePostAudio = () => {
-    if (!audioBlob) return; setIsUploading(true);
-    const r = new FileReader(); r.readAsDataURL(audioBlob);
-    r.onloadend = async () => {
-      const d = { id: Date.now(), author: myName, city: 'Seguro', content: '', likes: 0, time: 'Agora', duration: '00:00', audioData: r.result, isUserAuthor: true };
-      await saveDesabafoToDB(d); setDesabafos([d, ...desabafos]); setIsUploading(false); setAudioBlob(null); toast.success('Postado!');
+  const stopRecordingMsg = () => {
+    recorderRef.current?.stop();
+    setIsRecordingMsg(false);
+  };
+
+  const sendAudioMessage = () => {
+    if (!recordedMsgBlob) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(recordedMsgBlob);
+    reader.onloadend = () => {
+      const b64 = reader.result as string;
+      const msg = { id: userId.current, name: myName, audio: b64 };
+      channelRef.current?.send({ type: 'broadcast', event: 'audio-msg', payload: msg });
+      setChatMessages(prev => [...prev, { ...msg, id: Math.random().toString() }]);
+      setRecordedMsgBlob(null);
+      toast.success('Áudio enviado!');
     };
   };
 
+  const playMsgAudio = (b64: string, senderId?: string) => {
+    const a = new Audio(b64);
+    if (senderId) {
+      setParticipants(prev => prev.map(p => p.id === senderId ? { ...p, playingAudio: true, hasUnplayedAudio: false } : p));
+      a.onended = () => setParticipants(prev => prev.map(p => p.id === senderId ? { ...p, playingAudio: false } : p));
+    }
+    a.play();
+  };
+
+  /* ── Old Feed Audio Handling ── */
+  const [playingFeedId, setPlayingFeedId] = useState<number | null>(null);
+  const audioFeedRef = useRef<HTMLAudioElement | null>(null);
   const handlePlayFeedAudio = (d: any) => {
     if (playingFeedId === d.id) { audioFeedRef.current?.pause(); setPlayingFeedId(null); return; }
     audioFeedRef.current?.pause();
@@ -372,18 +321,15 @@ const RadioDasMaes = () => {
       const a = new Audio(d.audioData); a.onended = () => setPlayingFeedId(null); a.play(); audioFeedRef.current = a; setPlayingFeedId(d.id);
     } else { toast.error('Áudio não encontrado.'); }
   };
-
   const handleDeleteDesabafo = async (id: number) => {
-    if (playingFeedId === id) { audioFeedRef.current?.pause(); setPlayingFeedId(null); }
     await deleteDesabafoFromDB(id); setDesabafos(prev => prev.filter(d => d.id !== id));
     toast.success('Deletado.');
   };
-
   const handleApoiar = (id: number) => {
     setDesabafos(prev => prev.map(d => {
       if (d.id !== id) return d;
-      if (d.hasLiked) { toast.info('Já apoiou esta mãe.'); return d; }
-      toast.success('Abraço de apoio enviado! 🫂');
+      if (d.hasLiked) return d;
+      toast.success('Abraço enviado! 🫂');
       const novo = { ...d, likes: (d.likes || 0) + 1, hasLiked: true };
       saveDesabafoToDB(novo); return novo;
     }));
@@ -396,38 +342,33 @@ const RadioDasMaes = () => {
         {scorePopups.map(p => <ScorePopup key={p.id} {...p} onDone={() => setScorePopups(v => v.filter(x => x.id !== p.id))} />)}
       </AnimatePresence>
 
-      <div className="bg-white/65 shadow-xl backdrop-blur-md rounded-[2.5rem] border border-white/60 p-6 mb-6">
+      <div className="bg-white/65 shadow-xl backdrop-blur-md rounded-[2.5rem] p-6 mb-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-[var(--texto-escuro)]">Voz & <span className="text-[var(--rosa-forte)]">Acolhimento</span></h1>
+          <h1 className="text-3xl font-black text-[var(--texto-escuro)] tracking-tighter">Voz & <span className="text-[var(--rosa-forte)]">Acolhimento</span></h1>
           <div className="flex bg-[var(--ativo-bg)] p-1 rounded-2xl border border-[var(--rosa-medio)]/20 shadow-inner">
-            <button onClick={() => setActiveTab('podcast')} className={`px-5 py-2 rounded-xl text-sm font-black ${activeTab === 'podcast' ? 'bg-white text-[var(--rosa-forte)] shadow' : 'text-gray-400'}`}>Sala ao Vivo</button>
-            <button onClick={() => setActiveTab('desabafos')} className={`px-5 py-2 rounded-xl text-sm font-black ${activeTab === 'desabafos' ? 'bg-white text-[var(--rosa-forte)] shadow' : 'text-gray-400'}`}>Voz das Mães</button>
+            <button onClick={() => setActiveTab('podcast')} className={`px-5 py-2 rounded-xl text-sm font-black transition-all ${activeTab === 'podcast' ? 'bg-white text-[var(--rosa-forte)] shadow' : 'text-gray-400'}`}>Sala Interativa</button>
+            <button onClick={() => setActiveTab('desabafos')} className={`px-5 py-2 rounded-xl text-sm font-black transition-all ${activeTab === 'desabafos' ? 'bg-white text-[var(--rosa-forte)] shadow' : 'text-gray-400'}`}>Mural das Mães</button>
           </div>
         </div>
       </div>
 
-      {/* Hidden Jitsi Container — Positioned off-screen but active */}
-      <div ref={jitsiContainerRef} 
-        style={{ position: 'fixed', left: '-9999px', top: 0, width: '400px', height: '400px', opacity: 0.01 }} 
-      />
-
       <AnimatePresence mode="wait">
         {activeTab === 'podcast' ? (
-          <motion.div key="pod" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div key="social" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="bg-[#0f0610] rounded-[2.5rem] overflow-hidden shadow-2xl border border-[var(--rosa-forte)]/20">
-              <div className="px-6 py-4 border-b border-white/5 bg-black/20 flex justify-between">
-                <div className="flex items-center gap-2 text-white/50 text-sm italic font-serif"><Radio size={14} className="text-red-500" /> Sala de Apoio</div>
-                {hasJoinedLive && <span className="text-[10px] text-white/30 font-black uppercase">{participants.length} pessoas</span>}
+              <div className="px-6 py-4 border-b border-white/5 bg-black/20 flex justify-between items-center">
+                <div className="flex items-center gap-2 text-white/50 text-sm font-bold uppercase tracking-widest"><Radio size={14} className="text-pink-500" /> Sala Social</div>
+                {hasJoinedLive && <span className="text-[10px] text-white/30 font-black">{participants.length} PRESENTES</span>}
               </div>
-              <div className={`relative w-full overflow-hidden transition-all ${hasJoinedLive ? 'h-96' : 'h-64'} bg-[#1a0b14]`}>
+
+              <div className={`relative w-full overflow-hidden transition-all ${hasJoinedLive ? 'h-96' : 'h-64'} bg-gradient-to-b from-[#1a0b14] to-black`}>
                 {!hasJoinedLive ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                    <span className="text-6xl">🎙️</span>
-                    <button onClick={handleJoinLiveRoom} disabled={isJoiningLive} className="px-12 py-4 bg-pink-500 text-white font-black rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
-                      {isJoiningLive ? <Loader2 className="animate-spin" size={20} /> : <PhoneCall size={20} />}
-                      {isJoiningLive ? 'Conectando...' : 'Entrar na Sala'}
+                    <span className="text-6xl animate-bounce">💬</span>
+                    <button onClick={joinSocialRoom} className="px-10 py-4 bg-pink-500 text-white font-black rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">
+                      Entrar no Chat Interativo
                     </button>
-                    {isJoiningLive && <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest animate-pulse">Iniciando áudio e sincronização...</p>}
+                    <p className="text-white/20 text-[10px] uppercase font-bold text-center">Envie áudios, corações e mensagens em tempo real</p>
                   </div>
                 ) : (
                   <AnimatePresence>
@@ -438,54 +379,77 @@ const RadioDasMaes = () => {
                     ))}
                   </AnimatePresence>
                 )}
+                
+                {hasJoinedLive && !selectedTargetId && participants.length > 1 && (
+                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-white/5 backdrop-blur-md rounded-full text-[9px] text-white/40 font-bold border border-white/5">
+                      CLIQUE EM UMA MÃE PARA ENVIAR ❤️
+                   </div>
+                )}
               </div>
+
               {hasJoinedLive && (
-                <>
-                  <div ref={chatRef} className="h-28 overflow-y-auto px-5 pt-3 pb-1 bg-black/25 space-y-1 text-smooth-scroll">
-                    {chatMessages.length === 0 ? (
-                      <div className="h-full flex items-center justify-center opacity-10">
-                         <span className="text-[10px] font-black uppercase">O chat está vazio</span>
+                <div className="bg-black/40 border-t border-white/5">
+                  <div ref={chatRef} className="h-32 overflow-y-auto px-5 py-3 space-y-1.5">
+                    {chatMessages.map(m => (
+                      <div key={m.id} className="text-xs text-white/70 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1">
+                        <span className="text-pink-400 font-bold shrink-0">{m.name}:</span>
+                        {m.text && <span>{m.text}</span>}
+                        {m.audio && (
+                           <button onClick={() => playMsgAudio(m.audio!, m.id)} className="flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full hover:bg-white/20 transition-all text-pink-300">
+                             <Volume2 size={12} /> <span className="text-[10px] font-black uppercase">Ouvir Áudio</span>
+                           </button>
+                        )}
                       </div>
+                    ))}
+                  </div>
+
+                  <div className="px-4 py-4 bg-black/50 flex gap-2 items-center">
+                    {/* Recording UI */}
+                    {isRecordingMsg ? (
+                       <button onClick={stopRecordingMsg} className="flex-1 py-2.5 bg-red-500 text-white rounded-xl font-black text-xs animate-pulse flex items-center justify-center gap-2">
+                         <StopCircle size={16} /> PARAR E ENVIAR ÁUDIO
+                       </button>
+                    ) : recordedMsgBlob ? (
+                       <div className="flex-1 flex gap-2">
+                          <button onClick={() => setRecordedMsgBlob(null)} className="px-4 py-2.5 bg-white/10 text-white/40 rounded-xl font-bold text-xs uppercase">Cancelar</button>
+                          <button onClick={sendAudioMessage} className="flex-1 py-2.5 bg-green-500 text-white rounded-xl font-black text-xs">ENVIAR NOTA DE VOZ 🎙️</button>
+                       </div>
                     ) : (
-                      chatMessages.map(m => <div key={m.id} className="text-xs text-white/70 animate-in fade-in slide-in-from-left-2"><span className="text-pink-400 font-bold">{m.name}:</span> {m.text}</div>)
+                      <>
+                        <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Sua mensagem..." className="flex-1 bg-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none focus:bg-white/10 transition-all" />
+                        <button onClick={handleSendMessage} className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white hover:bg-white/20"><Send size={18} /></button>
+                        <button onClick={startRecordingMsg} className="w-12 h-12 bg-pink-500/20 text-pink-500 border border-pink-500/30 rounded-xl flex items-center justify-center hover:bg-pink-500 hover:text-white transition-all"><Mic size={18} /></button>
+                        <button onClick={handleSendHeart} className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all ${selectedTargetId ? 'bg-pink-500 shadow-lg shadow-pink-500/40 scale-110' : 'bg-white/5 opacity-20'}`}>❤️</button>
+                      </>
                     )}
+                    <button onClick={leaveSocialRoom} className="p-2 text-white/20 hover:text-red-400 transition-colors ml-2"><PhoneOff size={18} /></button>
                   </div>
-                  <div className="px-4 py-3 bg-black/30 border-t border-white/5 flex gap-2">
-                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Mensagem..." className="flex-1 bg-white/5 rounded-xl px-4 py-2 text-white outline-none focus:bg-white/10 transition-all" />
-                    <button onClick={handleSendMessage} className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white hover:bg-white/20 transition-all"><Send size={14} /></button>
-                    <button onClick={handleSendHeart} className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${selectedTargetId ? 'bg-pink-500 scale-110' : 'bg-white/10 opacity-30 shadow-inner'}`}>❤️</button>
-                    <button onClick={handleLeaveLiveRoom} className="px-4 h-10 bg-red-500/80 hover:bg-red-500 text-white font-bold rounded-xl text-[10px] uppercase transition-all">Sair</button>
-                  </div>
-                </>
+                </div>
               )}
             </div>
           </motion.div>
         ) : (
-          /* ── Desabafos Tab Simplificado ── */
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-3xl shadow-xl border border-pink-100 text-center">
-              <h2 className="text-xl font-bold mb-4">Novo Desabafo</h2>
-              <button onClick={isRecording ? stopRecording : startRecording} className={`w-full py-4 rounded-xl font-bold transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-pink-500 text-white hover:bg-pink-600'}`}>
-                {isRecording ? 'Parar Gravação' : 'Iniciar Microfone'}
-              </button>
-              {audioBlob && <button onClick={handlePostAudio} className="w-full mt-2 py-4 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600">Publicar</button>}
-            </div>
-            {desabafos.length === 0 ? (
-               <div className="text-center py-12 opacity-30 italic">Nenhum desabafo ainda...</div>
-            ) : (
-              desabafos.map(d => (
-                <div key={d.id} className="bg-white p-5 rounded-3xl shadow-md border border-gray-50 flex flex-col gap-4">
-                  <div className="flex justify-between items-center"><span className="font-bold text-sm text-pink-600">{d.author}</span><span className="text-[10px] text-gray-400">{d.time}</span></div>
-                  <button onClick={() => handlePlayFeedAudio(d)} className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${playingFeedId === d.id ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-pink-50 hover:text-pink-600'}`}>
-                    <Headphones size={16} /> Ouvir Desabafo ({d.duration || 'Gravação'})
-                  </button>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleApoiar(d.id)} className={`flex-1 py-2 rounded-xl border text-xs font-bold transition-all ${d.hasLiked ? 'bg-pink-500 text-white border-pink-500' : 'text-pink-500 border-pink-100 hover:bg-pink-50'}`}>Apoiar {d.likes > 0 && `(${d.likes})`}</button>
-                    {d.isUserAuthor && <button onClick={() => handleDeleteDesabafo(d.id)} className="px-4 py-2 border border-red-100 text-red-400 rounded-xl hover:bg-red-50"><Trash2 size={14} /></button>}
-                  </div>
+          /* Mural Tab */
+          <div className="space-y-5">
+             <div className="bg-white p-7 rounded-[2rem] shadow-xl border border-pink-50">
+                <h2 className="text-lg font-black text-gray-800 mb-4 italic">Postar no Mural de Voz</h2>
+                <button onClick={() => toast.info('Clique em Iniciar Gravação para criar um desabafo duradouro!')} className="w-full py-4 rounded-2xl bg-pink-50 text-pink-500 font-black text-sm uppercase flex items-center justify-center gap-2 border-2 border-pink-100 border-dashed">
+                  <Mic size={18} /> Use o Microfone abaixo
+                </button>
+             </div>
+             {desabafos.map(d => (
+              <div key={d.id} className="bg-white/90 p-5 rounded-[2rem] shadow-md border border-white flex flex-col gap-4">
+                <div className="flex justify-between items-center"><span className="font-bold text-sm text-pink-600">Mãe {d.author}</span><span className="text-[9px] font-black text-gray-300 uppercase tracking-widest">{d.time}</span></div>
+                <button onClick={() => handlePlayFeedAudio(d)} className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-black transition-all ${playingFeedId === d.id ? 'bg-pink-500 text-white shadow-lg' : 'bg-gray-50 text-gray-500'}`}>
+                   {playingFeedId === d.id ? <Pause size={18} fill="white" /> : <Play size={18} fill="currentColor" />}
+                   OUVIR DESABAFO
+                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => handleApoiar(d.id)} className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black transition-all ${d.hasLiked ? 'bg-pink-500 text-white border-pink-500' : 'text-pink-500 border-pink-100 hover:bg-pink-50'}`}>APOIAR {d.likes > 0 && `(${d.likes})`}</button>
+                  {d.isUserAuthor && <button onClick={() => handleDeleteDesabafo(d.id)} className="px-4 py-2 bg-red-50 text-red-400 rounded-xl"><Trash2 size={14} /></button>}
                 </div>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         )}
       </AnimatePresence>
