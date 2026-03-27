@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  Book, BookOpen, Clock, Coffee, HeartHandshake, Radio, BookMarked, 
+  Book, BookOpen, Clock, Coffee, HeartHandshake, MessageCircle, BookMarked, 
   Scale, Coins, Puzzle, Menu, AlertCircle, User, LogOut, Settings, ChevronRight, Stethoscope, Sparkles
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -36,7 +36,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Comunidade",
     items: [
       { name: "Rede de Mães", path: "/rede-de-maes", icon: HeartHandshake },
-      { name: "Rádio", path: "/radio", icon: Radio },
+      { name: "Chat", path: "/chat", icon: MessageCircle },
       { name: "Livraria", path: "/livraria", icon: BookMarked },
     ],
   },

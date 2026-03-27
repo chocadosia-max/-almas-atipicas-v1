@@ -148,7 +148,7 @@ function App() {
                 <Route path="/consultas" element={<GerenciadorConsultas />} />
 
                 <Route path="/rede-de-maes" element={<RedeDeMaes />} />
-                <Route path="/radio" element={<RadioDasMaes />} />
+                <Route path="/chat" element={<RadioDasMaes />} />
                 <Route path="/livraria" element={<Livraria />} />
 
                 <Route path="/seus-direitos" element={<SeusDireitos />} />
