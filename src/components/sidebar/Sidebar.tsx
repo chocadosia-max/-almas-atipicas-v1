@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface NavItem {
   name: string;
@@ -73,6 +74,25 @@ const SidebarContent = () => {
     return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
   }, []);
 
+  const handleConvidarMae = () => {
+    const mensagem = `🌸 Olá! Venha fazer parte da Plataforma Comigo (Almas Atípicas), uma rede de apoio incrível para mães.\n\nUse meu código de convite secreto para criar sua conta gratuita: *ACOLHER26*\n\nAcesse: https://almas-atipicas-v1.pages.dev`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Convite - Almas Atípicas',
+        text: mensagem
+      }).catch((err) => {
+        if (err.name !== "AbortError") {
+          navigator.clipboard.writeText(mensagem);
+          toast.success("Mensagem de convite copiada!");
+        }
+      });
+    } else {
+      navigator.clipboard.writeText(mensagem);
+      toast.success("Mensagem de convite copiada para a área de transferência!");
+    }
+  };
+
   return (
     <div className="flex flex-col h-full py-6">
       {/* Top Profile Card */}
@@ -105,6 +125,17 @@ const SidebarContent = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* Botão Convidar Mãe */}
+      <div className="px-4 mb-6">
+        <button 
+          onClick={handleConvidarMae}
+          className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 shadow-[0_10px_25px_rgba(245,158,11,0.4)] text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 group"
+        >
+          <Sparkles size={18} className="group-hover:animate-pulse" />
+          CONVIDAR UMA MÃE
+        </button>
+      </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-4 space-y-8 overflow-y-auto">
