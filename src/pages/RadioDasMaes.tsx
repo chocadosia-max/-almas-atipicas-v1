@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Send, Heart, Volume2, MessageCircle,
   Users, Anchor, Clock, Sparkles, Plus, PlayCircle, LogIn, 
-  Activity, Leaf
+  Activity, Leaf, Mic, StopCircle
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { toast } from "sonner";
@@ -111,6 +111,7 @@ const RadioDasMaes = () => {
     const [isHugging, setIsHugging] = useState(false);
     const [petals, setPetals] = useState<number[]>([]);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
 
     const mouseX = useMotionValue(0); const mouseY = useMotionValue(0);
     const rotateX = useTransform(useSpring(mouseY, { damping: 20, stiffness: 100 }), [-400, 400], [8, -8]);
@@ -120,11 +121,18 @@ const RadioDasMaes = () => {
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const bubbleRefsMap = useRef<Map<any, HTMLDivElement>>(new Map());
     const userId = useRef(Math.random().toString(36).substr(2, 9));
+    const mediaRecorder = useRef<MediaRecorder | null>(null);
+    const audioChunks = useRef<Blob[]>([]);
 
     const [myName] = useState(() => {
        try { const p = localStorage.getItem('almas_empreendedora_profile'); if (p) return JSON.parse(p).nomeEmpreendedora || 'Mãe'; return 'Mãe'; } catch { return 'Mãe'; }
     });
     const [myEmoji] = useState(() => avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)]);
+
+    useEffect(() => {
+       const saved = localStorage.getItem('social_radio_desabafos');
+       if (saved) setDesabafos(JSON.parse(saved));
+    }, []);
 
     const joinSocialRoom = useCallback(async () => {
         if (hasJoinedLive || isConnecting) return;
@@ -173,13 +181,45 @@ const RadioDasMaes = () => {
         channelRef.current?.send({ type: 'broadcast', event: 'heart-event', payload: { targetId: selectedTargetId } });
     };
 
+    const toggleRecording = async () => {
+        if (!isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder.current = new MediaRecorder(stream);
+                audioChunks.current = [];
+                mediaRecorder.current.ondataavailable = (e) => audioChunks.current.push(e.data);
+                mediaRecorder.current.onstop = () => {
+                    const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = () => {
+                        const base64Audio = reader.result as string;
+                        const newDesabafo = { id: Date.now(), author: myName, audioData: base64Audio, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                        setDesabafos(prev => {
+                            const updated = [newDesabafo, ...prev];
+                            localStorage.setItem('social_radio_desabafos', JSON.stringify(updated));
+                            return updated;
+                        });
+                        toast.success('Seu desabafo foi pendurado no mural! 🌸');
+                    };
+                };
+                mediaRecorder.current.start();
+                setIsRecording(true);
+            } catch { toast.error('Não consegui acessar seu microfone.'); }
+        } else {
+            mediaRecorder.current?.stop();
+            setIsRecording(false);
+            mediaRecorder.current?.stream.getTracks().forEach(t => t.stop());
+        }
+    };
+
     useEffect(() => { if (chatContainerRef.current) chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight; }, [chatMessages]);
 
     return (
         <div className="w-full max-w-7xl mx-auto h-[calc(100vh-60px)] flex flex-col p-2 overflow-hidden bg-transparent">
             {/* Particles */}
             <AnimatePresence> {petals.map(id => (
-              <motion.div key={id} initial={{ top: '-10%', left: `${Math.random() * 100}%`, opacity: 0 }} animate={{ top: '110%', opacity: [0, 1, 1, 0], rotate: 360 }} transition={{ duration: 7 }} className="fixed pointer-events-none text-2xl z-[99]" onAnimationComplete={() => setPetals(p => p.filter(x => x !== id))}>🌸</motion.div>
+              <motion.div key={id} initial={{ top: '-10%', left: `${Math.random() * 100}%`, opacity: 0 }} animate={{ top: '110%', opacity: [0, 1, 1, 0], rotate: 360 }} transition={{ duration: 7 }} className="fixed pointer-events-none text-2xl z-[101]" onAnimationComplete={() => setPetals(p => p.filter(x => x !== id))}>🌸</motion.div>
             ))} </AnimatePresence>
 
             {/* Header */}
@@ -257,6 +297,10 @@ const RadioDasMaes = () => {
                               <h2 className="text-3xl font-black text-gray-900 leading-none tracking-tight">Mural de <span className="text-pink-500">Apoio</span></h2>
                               <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2"><Sparkles size={14} className="text-pink-300" /> Sintonize com outras jornadas</p>
                            </div>
+                           <button onClick={toggleRecording} className={`flex items-center gap-3 px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-900 text-white hover:bg-pink-600'}`}>
+                               {isRecording ? <StopCircle size={20} /> : <Anchor size={20} />}
+                               {isRecording ? 'PARAR E PENDURAR' : 'PENDURAR DESABAFO'}
+                           </button>
                         </div>
                         <div className="flex-1 overflow-y-auto no-scrollbar grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 p-1 pb-10">
                              {desabafos.length === 0 ? ( <div className="col-span-full h-full flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} card={d} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
