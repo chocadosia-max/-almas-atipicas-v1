@@ -245,7 +245,7 @@ const RadioDasMaes = () => {
   }, [chatMessages]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto h-[calc(100vh-70px)] flex flex-col p-2 overflow-hidden bg-transparent">
+    <div className="w-full max-w-7xl mx-auto h-[calc(100vh-60px)] flex flex-col p-2 overflow-hidden bg-transparent">
       <AnimatePresence>
         {heartParticles.map(p => ( <motion.span key={p.id} initial={{ x: p.startX, y: p.startY, opacity: 1, scale: 1.5 }} animate={{ x: p.startX + (Math.random()-0.5)*200, y: p.startY - 200, opacity: 0, scale: 0.5 }} transition={{ duration: 1.8 }} className="fixed pointer-events-none select-none text-3xl z-[9999]" style={{ left: 0, top: 0 }}>❤️</motion.span> ))}
         {petals.map(id => <Petal key={id} id={id} onDone={() => setPetals(v => v.filter(x => x !== id))} />)}
@@ -269,7 +269,7 @@ const RadioDasMaes = () => {
                <button onClick={toggleAmbientMusic} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isAmbientAudioActive ? 'bg-pink-500 text-white shadow-lg scale-110 shadow-pink-500/40' : 'bg-white/80 text-gray-400 shadow-sm'}`}> <Music size={18} className={isAmbientAudioActive ? 'animate-pulse' : ''} /> </button>
             </div>
 
-            <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-[2] min-h-[460px] rounded-[3rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border-2 border-white/10 relative bg-black perspective-[1000px]">
+            <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-[2] min-h-[300px] rounded-[3rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border-2 border-white/10 relative bg-black perspective-[1000px]">
               <div className="absolute inset-0 bg-gradient-radial from-[#1e0a16] via-[#0d040a] to-[#050103] opacity-80" />
               <motion.div style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }} className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
                 <div className="absolute inset-0 pointer-events-auto">
@@ -287,7 +287,7 @@ const RadioDasMaes = () => {
               <div className="absolute top-4 left-6 flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10"> <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> <span className="text-[10px] font-black text-white/70 uppercase">{participants.length} MÃES CONECTADAS</span> </div>
             </div>
 
-            <div className="bg-white/30 backdrop-blur-3xl rounded-[2.5rem] border border-white/40 p-3 px-4 flex flex-col gap-3 shadow-2xl shrink-0">
+            <div className="bg-white/30 backdrop-blur-3xl rounded-[2.5rem] border border-white/40 p-3 px-4 flex flex-col gap-3 shadow-2xl flex-shrink-0">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex gap-2 p-1 bg-black/10 rounded-2xl border border-white/5 opacity-80 hover:opacity-100 transition-opacity">
                      <button onClick={() => { if (!hasJoinedLive) joinSocialRoom(); channelRef.current?.send({ type: 'broadcast', event: 'group-hug', payload: {} }); }} className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 rounded-xl text-[10px] font-black text-pink-900/60 hover:text-pink-600 transition-all"><Users size={14} /> ABRAÇO</button>
