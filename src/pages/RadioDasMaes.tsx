@@ -53,9 +53,10 @@ const MuralCard = ({ card, onPlay, onDelete, isMine }: any) => {
     return (
         <motion.div initial={{ scale: 0.9, opacity: 0, rotate: rotation }} animate={{ scale: 1, opacity: 1, rotate: rotation }} whileHover={{ scale: 1.02, rotate: 0, zIndex: 10 }} className="group relative bg-white/90 backdrop-blur-sm p-6 shadow-2xl rounded-[2.5rem] border border-white flex flex-col gap-5 overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-pink-500/10 rounded-full mt-4" />
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center text-3xl shadow-inner border border-white">👩</div>
+            
+            <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center text-3xl shadow-inner border border-white group-hover:scale-105 transition-transform">👩</div>
                   <div className="flex flex-col">
                       <span className="text-sm font-black text-gray-800 uppercase tracking-tight">Mãe {card.author}</span>
                       <div className="flex items-center gap-1.5 mt-1">
@@ -65,7 +66,7 @@ const MuralCard = ({ card, onPlay, onDelete, isMine }: any) => {
                   </div>
                 </div>
                 {isMine && (
-                   <button onClick={() => onDelete(card.id)} className="p-3 text-gray-300 hover:text-red-500 bg-gray-50 rounded-2xl transition-all hover:bg-red-50 group/del shadow-sm">
+                   <button onClick={() => onDelete(card.id)} className="w-10 h-10 flex items-center justify-center text-red-300 hover:text-red-500 bg-red-50/50 hover:bg-red-50 rounded-xl transition-all shadow-sm border border-red-100/50" title="Excluir desabafo">
                       <Trash2 size={18} />
                    </button>
                 )}
@@ -94,9 +95,9 @@ const MuralCard = ({ card, onPlay, onDelete, isMine }: any) => {
                   <div className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-ping" />
                   <span className="text-[9px] font-black text-pink-600 uppercase tracking-widest">Acolhimento Ativo</span>
                </div>
-               <div className="flex gap-1">
-                  <Heart size={14} className="text-pink-100 group-hover:text-pink-500 transition-colors" fill="currentColor" />
-                  <Heart size={14} className="text-pink-100 group-hover:text-pink-500 transition-colors" fill="currentColor" />
+               <div className="flex gap-4">
+                  <Heart size={16} className="text-pink-100 group-hover:text-pink-500 transition-colors cursor-pointer" fill="none" />
+                  <Heart size={16} className="text-pink-100 group-hover:text-rose-500 transition-colors cursor-pointer" fill="none" />
                </div>
             </div>
         </motion.div>
@@ -226,7 +227,7 @@ const RadioDasMaes = () => {
             localStorage.setItem('social_radio_desabafos', JSON.stringify(updated));
             return updated;
         });
-        toast.success('Seu desabafo foi retirado do mural. ✨');
+        toast.success('Registro removido do mural. ✨');
     };
 
     useEffect(() => { if (chatContainerRef.current) chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight; }, [chatMessages]);
@@ -319,7 +320,7 @@ const RadioDasMaes = () => {
                            </button>
                         </div>
                         <div className="flex-1 overflow-y-auto no-scrollbar grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 p-1 pb-10">
-                             {desabafos.length === 0 ? ( <div className="col-span-full h-full flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} isMine={d.author === myName} card={d} onDelete={handleDeleteCard} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
+                             {desabafos.length === 0 ? ( <div className="col-span-full h-full flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} isMine={d.author.toLowerCase().trim() === myName.toLowerCase().trim()} card={d} onDelete={handleDeleteCard} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
                         </div>
                     </motion.div>
                 )}
