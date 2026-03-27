@@ -25,7 +25,7 @@ const Index = () => {
       </div>
 
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-[100] py-4 px-6 md:px-12 bg-white/40 backdrop-blur-xl border-b border-white/40">
+      <nav className="fixed top-0 left-0 right-0 z-[100] py-4 px-6 md:px-12 bg-white/90 backdrop-blur-xl border-b border-pink-100 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 font-black text-2xl text-[var(--texto-escuro)]">
             <Sparkles className="text-[var(--rosa-forte)] w-6 h-6" />
@@ -38,7 +38,7 @@ const Index = () => {
           </div>
           <Link 
             to="/login" 
-            className="px-6 py-2.5 rounded-xl bg-white/60 hover:bg-white border border-white/60 text-[var(--texto-escuro)] font-bold transition-all shadow-sm"
+            className="px-6 py-2.5 rounded-xl bg-[var(--rosa-forte)] text-white font-bold transition-all shadow-md hover:scale-[1.05] active:scale-95"
           >
             Entrar
           </Link>
@@ -77,7 +77,7 @@ const Index = () => {
               >
                 COMEÇAR MINHA JORNADA <ArrowRight size={20} />
               </Link>
-              <div className="flex items-center gap-3 px-6 py-4 bg-white/40 border border-white/60 rounded-2xl backdrop-blur-sm">
+              <div className="flex items-center gap-3 px-6 py-4 bg-white border border-pink-100 rounded-2xl shadow-sm">
                  <div className="flex -space-x-2">
                     {[1,2,3].map(i => <div key={i} className={`w-8 h-8 rounded-full border-2 border-white bg-pink-${300 + i*100}`} />)}
                  </div>
@@ -86,11 +86,11 @@ const Index = () => {
             </motion.div>
           </motion.div>
 
-          <motion.div className="hidden sm:block"
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="relative"
+            className="hidden sm:block relative"
           >
             {/* Card Preview Visual */}
             <div className="w-full aspect-square rounded-[3rem] bg-gradient-to-br from-white/80 to-white/40 border border-white backdrop-blur-md shadow-[0_50px_100px_-20px_rgba(212,83,126,0.15)] flex items-center justify-center p-12 relative overflow-hidden">

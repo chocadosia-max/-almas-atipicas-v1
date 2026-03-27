@@ -53,10 +53,10 @@ const Livraria = () => {
             <button 
               key={cat}
               onClick={() => setFiltroCat(cat)}
-              className={`px-4 py-2 rounded-full font-bold text-sm transition-all ${
+              className={`px-4 py-2 rounded-full font-bold text-sm transition-all border ${
                 filtroCat === cat 
-                  ? 'bg-[var(--rosa-forte)] text-white shadow-md' 
-                  : 'bg-white/60 text-[var(--texto-claro)] hover:bg-white/80 hover:text-[var(--texto-escuro)] border border-white/50'
+                  ? 'bg-[var(--rosa-forte)] text-white shadow-md border-[var(--rosa-forte)]' 
+                  : 'bg-white text-[var(--texto-medio)] hover:bg-pink-50 border-pink-100 shadow-sm'
               }`}
             >
               {cat}
@@ -118,7 +118,7 @@ const Livraria = () => {
                 <p className="text-[var(--texto-claro)] text-sm mb-4 line-clamp-2">{book.desc}</p>
               </div>
               
-              <button className="w-full py-2.5 rounded-xl bg-[var(--ativo-bg)] text-[var(--texto-escuro)] font-bold group-hover:bg-[var(--rosa-forte)] group-hover:text-white transition-colors">
+              <button className="w-full py-2.5 rounded-xl bg-white border border-pink-100 text-[var(--rosa-forte)] font-bold group-hover:bg-[var(--rosa-forte)] group-hover:text-white group-hover:border-[var(--rosa-forte)] transition-all shadow-sm">
                 Detalhes
               </button>
             </div>

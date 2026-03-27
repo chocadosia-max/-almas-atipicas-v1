@@ -79,7 +79,7 @@ const SidebarContent = () => {
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="mx-4 mb-8 p-4 rounded-2xl bg-white/40 border border-white/60 backdrop-blur-md shadow-sm group cursor-pointer hover:bg-white/60 transition-all"
+        className="mx-4 mb-8 p-4 rounded-2xl bg-white border border-pink-100 shadow-sm group cursor-pointer hover:shadow-md transition-all"
       >
         <div className="flex items-center gap-3 relative">
           <div className="relative w-12 h-12 rounded-full bg-gradient-to-tr from-[var(--rosa-forte)] to-[var(--rosa-medio)] flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform">
@@ -123,8 +123,8 @@ const SidebarContent = () => {
                       whileTap={{ scale: 0.98 }}
                       className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                         isActive 
-                        ? "bg-white text-[var(--rosa-forte)] shadow-sm" 
-                        : "text-[var(--texto-medio)]/70 hover:bg-white/40 hover:text-[var(--texto-escuro)]"
+                        ? "bg-[var(--rosa-forte)] text-white shadow-md" 
+                        : "text-[var(--texto-medio)] hover:bg-[var(--rosa-forte)]/10 hover:text-[var(--texto-escuro)] bg-white/60 border border-white/40"
                       }`}
                     >
                       {isActive && (
@@ -185,7 +185,7 @@ const SidebarContent = () => {
         
         <button 
           onClick={() => signOut()} 
-          className="w-full flex items-center gap-2 p-3 rounded-xl text-[var(--texto-claro)] font-bold text-xs hover:bg-white/40 hover:text-red-500 transition-all group"
+          className="w-full flex items-center gap-2 p-3 rounded-xl text-[var(--texto-medio)] font-bold text-xs bg-white border border-pink-100 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all group"
         >
           <LogOut size={16} className="group-hover:rotate-180 transition-transform duration-500" />
           Sair da Conta
@@ -199,7 +199,7 @@ export const Sidebar = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block fixed left-0 top-0 bottom-0 z-40 w-[240px] border-r border-white/20 bg-white/20 backdrop-blur-xl">
+      <aside className="hidden lg:block fixed left-0 top-0 bottom-0 z-40 w-[240px] border-r border-pink-100 bg-white/80 backdrop-blur-xl">
         <SidebarContent />
       </aside>
 

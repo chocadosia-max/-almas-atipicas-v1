@@ -142,7 +142,7 @@ const GerenciadorConsultas = () => {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white/65 shadow-xl backdrop-blur-[8px] rounded-3xl border border-white/40 p-6 md:p-8 mb-6 relative overflow-hidden"
+        className="bg-white shadow-xl rounded-3xl border border-pink-100 p-6 md:p-8 mb-6 relative overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--rosa-forte)]/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
@@ -313,7 +313,7 @@ const GerenciadorConsultas = () => {
       </AnimatePresence>
 
       {/* FILTROS */}
-      <div className="flex gap-2 mb-5 bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl border border-white/40 shadow-sm">
+      <div className="flex gap-2 mb-5 bg-white p-1.5 rounded-2xl border border-pink-100 shadow-sm">
         {([
           { key: 'proximas', label: '📅 Próximas' },
           { key: 'concluidas', label: '✅ Concluídas' },
@@ -324,8 +324,8 @@ const GerenciadorConsultas = () => {
             onClick={() => setFiltro(f.key)}
             className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
               filtro === f.key
-                ? 'bg-white text-[var(--rosa-forte)] shadow-md'
-                : 'text-[var(--texto-claro)] hover:text-[var(--texto-escuro)]'
+                ? 'bg-[var(--rosa-forte)] text-white shadow-md'
+                : 'text-[var(--texto-medio)] hover:bg-pink-50'
             }`}
           >
             {f.label}

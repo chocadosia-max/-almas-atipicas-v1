@@ -157,7 +157,7 @@ const SeusDireitos = () => {
                   </div>
                   
                   {cat.items.map((item) => (
-                    <AccordionItem key={item.id} value={item.id} className="border border-white/60 bg-white/30 rounded-2xl px-4 mb-3 overflow-hidden transition-all data-[state=open]:bg-white/50 data-[state=open]:border-[var(--rosa-medio)]">
+                    <AccordionItem key={item.id} value={item.id} className="border border-pink-100 bg-white rounded-2xl px-4 mb-3 overflow-hidden transition-all data-[state=open]:shadow-md data-[state=open]:border-[var(--rosa-forte)]/30">
                       <AccordionTrigger className="hover:no-underline py-4 text-[var(--texto-escuro)] font-bold text-left hover:text-[var(--rosa-forte)]">
                         {item.name}
                       </AccordionTrigger>
