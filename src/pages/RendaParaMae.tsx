@@ -81,6 +81,7 @@ const deleteVagaDB = async (id: number) => {
   });
 };
 
+const RendaParaMae = () => {
   const [activeTab, setActiveTab] = useState<'vagas' | 'perfil'>('vagas');
   const [showFlowers, setShowFlowers] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
