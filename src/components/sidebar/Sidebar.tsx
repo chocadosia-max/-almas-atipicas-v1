@@ -3,7 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Book, BookOpen, Clock, Coffee, HeartHandshake, MessageCircle, BookMarked, 
-  Scale, Coins, Puzzle, Menu, AlertCircle, User, LogOut, Settings, ChevronRight, Stethoscope, Sparkles
+  Scale, Coins, Puzzle, Menu, AlertCircle, User, LogOut, Settings, ChevronRight, Stethoscope, Sparkles,
+  X, Camera, Save
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,8 +63,11 @@ const SidebarContent = () => {
   
   const [localProfile, setLocalProfile] = useState(() => {
     const saved = localStorage.getItem('almas_empreendedora_profile');
-    return saved ? JSON.parse(saved) : { avatarBase64: '', isEmpreendedora: false };
+    return saved ? JSON.parse(saved) : { avatarBase64: '', isEmpreendedora: false, nomeEmpreendedora: '', bio: '' };
   });
+
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [editProfile, setEditProfile] = useState(localProfile);
 
   useEffect(() => {
     const handleProfileUpdate = () => {
@@ -86,6 +90,7 @@ const SidebarContent = () => {
     <div className="flex flex-col h-full py-6">
       {/* Top Profile Card */}
       <motion.div 
+        onClick={() => { setEditProfile(localProfile); setIsProfileModalOpen(true); }}
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         className="mx-4 mb-8 p-4 rounded-2xl bg-white border border-pink-100 shadow-sm group cursor-pointer hover:shadow-md transition-all"
@@ -96,12 +101,6 @@ const SidebarContent = () => {
                <img src={localProfile.avatarBase64} alt="Avatar" className="w-full h-full object-cover rounded-full" />
             ) : (
                <User size={24} />
-            )}
-            
-            {localProfile.isEmpreendedora && (
-               <div className="absolute -top-3 -right-2 text-2xl drop-shadow-[0_2px_4px_rgba(212,83,126,0.6)] animate-bounce" title="Mãe Empreendedora">
-                 👑🏵️
-               </div>
             )}
           </div>
           <div className="overflow-hidden">
@@ -211,6 +210,83 @@ const SidebarContent = () => {
           Sair da Conta
         </button>
       </div>
+
+      {/* Profile Config Modal */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="w-full max-w-sm bg-white rounded-[2rem] p-6 shadow-2xl border border-pink-100 relative overflow-hidden"
+          >
+            <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-gray-900 transition-colors">
+               <X size={16} />
+            </button>
+            
+            <h3 className="text-xl font-black text-gray-900 mb-6 font-serif">Seu <span className="text-pink-500 italic">Perfil</span></h3>
+
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-pink-400 to-rose-500 p-1 flex items-center justify-center">
+                {editProfile.avatarBase64 ? (
+                   <img src={editProfile.avatarBase64} alt="Avatar" className="w-full h-full object-cover rounded-full border-4 border-white" />
+                ) : (
+                   <User size={40} className="text-white" />
+                )}
+                {editProfile.isEmpreendedora && (
+                   <div className="absolute -top-2 -right-2 text-3xl drop-shadow-md animate-pulse">👑</div>
+                )}
+                <label className="absolute bottom-0 right-0 w-8 h-8 bg-white text-pink-600 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform border border-pink-100">
+                   <Camera size={14} />
+                   <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                         const reader = new FileReader();
+                         reader.onloadend = () => setEditProfile({ ...editProfile, avatarBase64: reader.result as string });
+                         reader.readAsDataURL(file);
+                      }
+                   }} />
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1 block">Nome de Apresentação</label>
+                <input 
+                  type="text" 
+                  value={editProfile.nomeEmpreendedora} 
+                  onChange={e => setEditProfile({ ...editProfile, nomeEmpreendedora: e.target.value })}
+                  placeholder="Ex: Mãe Maria"
+                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 ring-pink-500/20 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-black tracking-widest text-gray-400 mb-1 block">Biografia Curta</label>
+                <textarea 
+                  value={editProfile.bio} 
+                  onChange={e => setEditProfile({ ...editProfile, bio: e.target.value })}
+                  placeholder="Conte um pouco sobre a sua jornada..."
+                  rows={3}
+                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-medium text-gray-600 resize-none focus:ring-2 ring-pink-500/20 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                 localStorage.setItem('almas_empreendedora_profile', JSON.stringify(editProfile));
+                 window.dispatchEvent(new Event('profileUpdated'));
+                 setIsProfileModalOpen(false);
+                 toast.success('Perfil atualizado com sucesso!');
+              }}
+              className="w-full mt-6 py-4 bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg shadow-pink-500/30"
+            >
+               <Save size={16} /> Salvar Perfil
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
