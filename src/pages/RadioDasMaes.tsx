@@ -306,7 +306,8 @@ const RadioDasMaes = () => {
                         {hasJoinedLive ? (
                            <div className="col-span-3 w-full h-[400px] bg-[#0E0608] rounded-3xl overflow-hidden relative shadow-inner ring-2 ring-[var(--rosa-forte)]/20">
                               <iframe
-                                src="https://meet.ffmuc.net/SalaDeApoioAlmasAtipicas_Radio_3?config.startWithVideoMuted=true&config.prejoinPageEnabled=false&config.disableDeepLinking=true&interfaceConfig.SHOW_CHROME_EXTENSION_BANNER=false"
+                                key="framatalk_live"
+                                src="https://framatalk.org/SalaDeApoioAlmasAtipicas_Radio_4?config.startWithVideoMuted=true&config.prejoinPageEnabled=false&config.disableDeepLinking=true"
                                 allow="camera; microphone; display-capture; autoplay"
                                 className="w-full h-full border-0"
                               />
