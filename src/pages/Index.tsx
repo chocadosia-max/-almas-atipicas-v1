@@ -34,7 +34,6 @@ const Index = () => {
           <div className="hidden md:flex items-center gap-8 text-sm font-bold text-[var(--texto-medio)]">
             <a href="#solucao" className="hover:text-[var(--rosa-forte)] transition-colors">A Solução</a>
             <a href="#comunidade" className="hover:text-[var(--rosa-forte)] transition-colors">Comunidade</a>
-            <a href="#precos" className="hover:text-[var(--rosa-forte)] transition-colors">Planos</a>
           </div>
           <Link 
             to="/login" 
@@ -181,68 +180,6 @@ const Index = () => {
                  </div>
               </div>
            </div>
-        </section>
-
-        {/* PRICING / THE GRAND SLAM OFFER */}
-        <section id="precos" className="py-24 bg-[var(--texto-escuro)] text-white overflow-hidden relative">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-[var(--rosa-forte)]/10 rounded-full blur-[150px] pointer-events-none" />
-          
-          <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-            <h2 className="text-sm font-black text-[var(--rosa-forte)] uppercase tracking-[0.3em] mb-4">Escolha sua Porta de Entrada</h2>
-            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-8 md:mb-16">O investimento no seu <span className="italic">suporte</span>.</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-               {/* Free Plan */}
-               <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] flex flex-col items-center">
-                  <h4 className="text-xl font-bold mb-2 opacity-60">Gratuito</h4>
-                  <div className="text-5xl font-black mb-8">R$ 0</div>
-                  <ul className="text-left space-y-4 mb-10 flex-1">
-                    <li className="flex items-center gap-2 text-sm opacity-80"><CheckCircle2 size={16} /> Acesso à Rede (Básico)</li>
-                    <li className="flex items-center gap-2 text-sm opacity-80"><CheckCircle2 size={16} /> Guia de Leis Resumido</li>
-                    <li className="flex items-center gap-2 text-sm opacity-80"><CheckCircle2 size={16} /> 1 Jogo Kids Grátis</li>
-                  </ul>
-                  <Link to="/login" className="w-full py-4 rounded-xl border border-white/20 font-bold hover:bg-white/10 transition-all">Começar agora</Link>
-               </div>
-
-               {/* Premium Plan (Hormozi Offer) */}
-               <div className="p-8 bg-white text-[var(--texto-escuro)] rounded-[2.5rem] flex flex-col items-center relative shadow-[0_0_50px_rgba(212,83,126,0.3)] transform md:scale-105">
-                  <div className="absolute -top-4 px-4 py-1 bg-[var(--rosa-forte)] text-white text-[10px] font-black uppercase rounded-full tracking-widest">Oferta de Lançamento</div>
-                  <h4 className="text-xl font-bold mb-2">Membro Premium</h4>
-                  <div className="text-5xl font-black mb-2 text-[var(--rosa-forte)]">R$ 29,90</div>
-                  <p className="text-xs font-bold text-[var(--texto-claro)] mb-8">ou R$ 299 anuais (Economize 2 meses)</p>
-                  
-                  <ul className="text-left space-y-4 mb-10 flex-1 w-full">
-                    <li className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 size={18} className="text-green-500" /> Rede de Mães Pro (Busca por Local)</li>
-                    <li className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 size={18} className="text-green-500" /> Todos os Jogos Kids Liberados</li>
-                    <li className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 size={18} className="text-green-500" /> Minha Jornada (Funcionalidades Full)</li>
-                    <li className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 size={18} className="text-green-500" /> Rádio Atípica (Podcast Exclusivo)</li>
-                    <li className="bg-pink-50 p-3 rounded-lg border border-pink-100 flex flex-col gap-1">
-                       <span className="text-[10px] font-black text-[var(--rosa-forte)] uppercase tracking-tighter italic">+ BÔNUS EXCLUSIVO</span>
-                       <span className="text-xs font-bold">E-book: Guia do BPC s/ Advogados</span>
-                    </li>
-                  </ul>
-                  
-                  <Link to="/login" className="w-full py-4 rounded-xl bg-[var(--rosa-forte)] text-white font-black hover:bg-[#b04066] transition-all flex items-center justify-center gap-2">
-                    ASSINAR CLUBE PREMIUM <Zap size={18} fill="currentColor" />
-                  </Link>
-               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* GUARANTEE & TRUST */}
-        <section className="py-20 max-w-4xl mx-auto px-6 text-center">
-            <div className="p-10 bg-white border border-pink-100 rounded-[3rem] shadow-xl">
-               <ShieldCheck className="w-16 h-16 text-green-500 mx-auto mb-6" />
-               <h3 className="text-3xl font-black text-[var(--texto-escuro)] mb-4">Garantia Vida Atípica</h3>
-               <p className="text-[var(--texto-medio)] font-medium mb-8">
-                 Se nos primeiros 7 dias você sentir que a comunidade e as ferramentas não estão trazendo o acolhimento que você esperava, devolvemos 100% do seu investimento. Sem perguntas, sem burocracia. Estamos aqui para somar, não para ser mais um fardo.
-               </p>
-               <div className="flex items-center justify-center gap-8 opacity-40">
-                  <div className="font-bold border-2 border-black px-3 py-1 text-xs">PAGAMENTO SEGURO</div>
-                  <div className="font-bold border-2 border-black px-3 py-1 text-xs">PIX / CARTÃO</div>
-               </div>
-            </div>
         </section>
 
         {/* FOOTER */}
