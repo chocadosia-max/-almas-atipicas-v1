@@ -304,16 +304,12 @@ const RadioDasMaes = () => {
                      
                      <div className="grid grid-cols-3 gap-6 mb-8 text-center text-sans min-h-[120px]">
                         {hasJoinedLive ? (
-                           <div className="col-span-3 flex justify-center">
-                             <div className="relative">
-                                <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-4xl shadow-xl transition-all ring-4 ring-[var(--rosa-forte)] scale-110 bg-[#2D121B]">
-                                   👩‍👧
-                                   <div className="absolute -bottom-1 -right-1 bg-[var(--rosa-forte)] p-1 rounded-full shadow-lg">
-                                      <Mic size={14} className="text-white" />
-                                   </div>
-                                </div>
-                                <p className="text-white font-bold mt-4 uppercase tracking-tighter">Você (Ao vivo)</p>
-                             </div>
+                           <div className="col-span-3 w-full h-[400px] bg-[#0E0608] rounded-3xl overflow-hidden relative shadow-inner ring-2 ring-[var(--rosa-forte)]/20">
+                              <iframe
+                                src="https://meet.jit.si/SalaDeApoioAlmasAtipicas_Radio_2?config.startWithVideoMuted=true&config.prejoinPageEnabled=false&config.disableDeepLinking=true&interfaceConfig.SHOW_CHROME_EXTENSION_BANNER=false"
+                                allow="camera; microphone; display-capture"
+                                className="w-full h-full border-0"
+                              />
                            </div>
                         ) : (
                            <div className="col-span-3 flex items-center justify-center text-white/50 text-sm font-bold">
