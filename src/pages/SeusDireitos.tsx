@@ -17,6 +17,7 @@ import {
   Newspaper
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import CalculadoraDireitos from "@/components/CalculadoraDireitos";
 
 const DIREITOS_CATEGORIES = [
   {
@@ -195,8 +196,10 @@ const SeusDireitos = () => {
           </div>
         </div>
 
-        {/* Sidebar News */}
+        {/* Sidebar: Calculadora + News */}
         <div className="lg:col-span-4 space-y-6">
+          {/* CALCULADORA DE DIREITOS */}
+          <CalculadoraDireitos />
           <div className="bg-white/65 shadow-xl backdrop-blur-[8px] rounded-3xl border border-white/40 p-6">
             <h3 className="flex items-center gap-2 text-xl font-bold text-[var(--texto-escuro)] mb-6 font-serif">
               <Newspaper className="text-[var(--rosa-forte)]" /> Notícias & Atualizações
