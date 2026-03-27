@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  Mic, StopCircle, Send, Heart, Volume2,
-  Radio, Play, Pause,
+  Send, Heart, Volume2, Radio,
   Users, MessageCircle, Anchor, Clock, Sparkles, Plus, PlayCircle, LogIn, 
   Activity, Leaf
 } from 'lucide-react';
@@ -83,7 +82,6 @@ const RadioDasMaes = () => {
     const [heartsSent, setHeartsSent] = useState<Set<string>>(new Set());
     const [isHugging, setIsHugging] = useState(false);
     const [petals, setPetals] = useState<number[]>([]);
-    const [isAmbientAudioActive, setIsAmbientAudioActive] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
 
     const mouseX = useMotionValue(0); const mouseY = useMotionValue(0);
@@ -92,7 +90,6 @@ const RadioDasMaes = () => {
 
     const channelRef = useRef<any>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
-    const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
     const bubbleRefsMap = useRef<Map<any, HTMLDivElement>>(new Map());
     const userId = useRef(Math.random().toString(36).substr(2, 9));
 
@@ -100,18 +97,6 @@ const RadioDasMaes = () => {
        try { const p = localStorage.getItem('almas_empreendedora_profile'); if (p) return JSON.parse(p).nomeEmpreendedora || 'Mãe'; return 'Mãe'; } catch { return 'Mãe'; }
     });
     const [myEmoji] = useState(() => avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)]);
-
-    useEffect(() => {
-        const audio = new Audio('https://www.bensound.com/bensound-music/bensound-tomorrow.mp3');
-        audio.loop = true; audio.volume = 0.1; ambientAudioRef.current = audio;
-        return () => { if (ambientAudioRef.current) ambientAudioRef.current.pause(); };
-    }, []);
-
-    const toggleAmbientMusic = useCallback(() => {
-        if (isAmbientAudioActive) ambientAudioRef.current?.pause();
-        else ambientAudioRef.current?.play().catch(() => {});
-        setIsAmbientAudioActive(!isAmbientAudioActive);
-    }, [isAmbientAudioActive]);
 
     const joinSocialRoom = useCallback(async () => {
         if (hasJoinedLive || isConnecting) return;
@@ -216,7 +201,6 @@ const RadioDasMaes = () => {
                                      <button onClick={joinSocialRoom} disabled={isConnecting} className="absolute bottom-6 right-6 z-[100] pointer-events-auto flex items-center gap-2 px-6 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-3xl border border-white/20 rounded-xl text-[9px] font-black text-white hover:text-pink-400 transition-all uppercase tracking-widest leading-none shadow-2xl active:scale-95"> {isConnecting ? <Activity size={14} className="animate-spin" /> : <LogIn size={14} />} {isConnecting ? 'CONECTANDO...' : 'ENTRAR NA SALA'} </button>
                                 </div>
                             )}
-                            <div className="absolute top-4 right-4 z-[60] flex gap-2"> <button onClick={toggleAmbientMusic} className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:scale-110 shadow-lg flex items-center justify-center transition-all"> {isAmbientAudioActive ? <Pause size={18} /> : <Play size={18} />} </button> </div>
                         </div>
 
                         {/* Control Bar - ENSURED VISIBILITY */}
