@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { Sparkles, Heart, Users, Star, CheckCircle2, ArrowRight, ShieldCheck, Zap, MessageCircle, Puzzle, Headphones, Scale } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -14,6 +14,33 @@ const Index = () => {
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
+  };
+
+  // 3D Tilt Logic
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const mouseXSpring = useSpring(x);
+  const mouseYSpring = useSpring(y);
+
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["17.5deg", "-17.5deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-17.5deg", "17.5deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
   };
 
   return (
@@ -171,13 +198,51 @@ const Index = () => {
                   ))}
                 </div>
               </div>
-              <div className="hidden md:grid lg:w-1/2 grid-cols-2 gap-4">
-                 <div className="aspect-[4/5] bg-pink-100 rounded-3xl overflow-hidden shadow-lg transform translate-y-8">
-                    <img src="https://images.unsplash.com/photo-1544126592-807daa2b569b?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover" alt="Mãe e filho" />
-                 </div>
-                 <div className="aspect-[4/5] bg-pink-200 rounded-3xl overflow-hidden shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1484981138541-3d074aa97716?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover" alt="Suporte" />
-                 </div>
+              <div className="hidden lg:flex lg:w-1/2 justify-center items-center perspective-1000">
+                  <motion.div
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleMouseLeave}
+                    style={{
+                      rotateY,
+                      rotateX,
+                      transformStyle: "preserve-3d",
+                    }}
+                    className="relative h-96 w-72 rounded-[2rem] bg-gradient-to-br from-[var(--rosa-forte)] to-[var(--rosa-medio)] shadow-2xl"
+                  >
+                    <div
+                      style={{
+                        transform: "translateZ(75px)",
+                        transformStyle: "preserve-3d",
+                      }}
+                      className="absolute inset-4 grid place-content-center rounded-[1.5rem] bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
+                    >
+                      <Sparkles
+                        style={{
+                          transform: "translateZ(50px)",
+                        }}
+                        className="mx-auto text-white w-20 h-20 drop-shadow-2xl mb-4"
+                      />
+                      <p
+                        style={{
+                          transform: "translateZ(40px)",
+                        }}
+                        className="text-center text-2xl font-black text-white px-2"
+                      >
+                        Acolhimento <br />
+                        <span className="text-pink-100 italic font-serif font-normal">Sempre Ativo</span>
+                      </p>
+                    </div>
+
+                    {/* Floating elements behind */}
+                    <motion.div
+                      style={{ transform: "translateZ(30px)" }}
+                      className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"
+                    />
+                    <motion.div
+                      style={{ transform: "translateZ(30px)" }}
+                      className="absolute -bottom-10 -right-10 w-32 h-32 bg-pink-500/20 rounded-full blur-2xl"
+                    />
+                  </motion.div>
               </div>
            </div>
         </section>
