@@ -3,7 +3,7 @@ import {
   Mic, StopCircle, Send, Heart, Volume2,
   Radio, Play, Pause,
   Users, Music, Leaf, Heart as HeartIcon,
-  MessageCircle, Anchor, Clock, Sparkles, Plus, PlayCircle
+  MessageCircle, Anchor, Clock, Sparkles, Plus, PlayCircle, LogIn
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { toast } from "sonner";
@@ -124,33 +124,39 @@ const RadioDasMaes = () => {
 
     const joinSocialRoom = useCallback(() => {
         if (hasJoinedLive) return;
-        setHasJoinedLive(true);
-        const channel = supabase.channel('radio-social-room', { config: { presence: { key: userId.current } } });
-        channel
-          .on('presence', { event: 'sync' }, () => {
-             const state = channel.presenceState();
-             const users = Object.keys(state).map(k => ({ ...(state[k] as any)[0], id: k, isMe: k === userId.current })).filter(Boolean);
-             setParticipants(users);
-          })
-          .on('broadcast', { event: 'chat-msg' }, ({ payload }) => setChatMessages(prev => [...prev.slice(-49), payload]))
-          .on('broadcast', { event: 'mural-pinned' }, ({ payload }) => {
-             setDesabafos(prev => {
-                const updated = [payload, ...prev].slice(0, 20);
-                localStorage.setItem('social_radio_desabafos', JSON.stringify(updated));
-                return updated;
-             });
-             toast.info(`${payload.author} deixou um novo desabafo!`);
-          })
-          .on('broadcast', { event: 'heart-event' }, ({ payload }) => {
-            setReceivingHeartId(payload.targetId); setTimeout(() => setReceivingHeartId(null), 700);
-            setParticipants(prev => prev.map(p => p.id === payload.targetId ? { ...p, hearts: (p.hearts || 0) + 1 } : p));
-          })
-          .on('broadcast', { event: 'audio-msg' }, ({ payload }) => {
-             setChatMessages(prev => [...prev.slice(-49), payload]);
-             new Audio(payload.audio).play().catch(() => {});
-          })
-          .subscribe(async (status) => { if (status === 'SUBSCRIBED') await channel.track({ name: myName, emoji: myEmoji, hearts: 0, mood: null }); });
-        channelRef.current = channel;
+        try {
+            const channel = supabase.channel('radio-social-room', { config: { presence: { key: userId.current } } });
+            channel
+              .on('presence', { event: 'sync' }, () => {
+                 const state = channel.presenceState();
+                 const users = Object.keys(state).map(k => ({ ...(state[k] as any)[0], id: k, isMe: k === userId.current })).filter(Boolean);
+                 setParticipants(users);
+              })
+              .on('broadcast', { event: 'chat-msg' }, ({ payload }) => setChatMessages(prev => [...prev.slice(-49), payload]))
+              .on('broadcast', { event: 'mural-pinned' }, ({ payload }) => {
+                 setDesabafos(prev => {
+                    const updated = [payload, ...prev].slice(0, 20);
+                    localStorage.setItem('social_radio_desabafos', JSON.stringify(updated));
+                    return updated;
+                 });
+              })
+              .on('broadcast', { event: 'heart-event' }, ({ payload }) => {
+                setReceivingHeartId(payload.targetId); setTimeout(() => setReceivingHeartId(null), 700);
+                setParticipants(prev => prev.map(p => p.id === payload.targetId ? { ...p, hearts: (p.hearts || 0) + 1 } : p));
+              })
+              .on('broadcast', { event: 'audio-msg' }, ({ payload }) => {
+                 setChatMessages(prev => [...prev.slice(-49), payload]);
+                 new Audio(payload.audio).play().catch(() => {});
+              })
+              .subscribe(async (status) => { 
+                if (status === 'SUBSCRIBED') {
+                   await channel.track({ name: myName, emoji: myEmoji, hearts: 0, mood: null }); 
+                   setHasJoinedLive(true);
+                   toast.success('Conectada à sala!');
+                }
+              });
+            channelRef.current = channel;
+        } catch (e) { toast.error('Erro ao conectar.'); }
     }, [hasJoinedLive, myEmoji, myName]);
 
     const handleSendMessage = () => {
@@ -222,13 +228,13 @@ const RadioDasMaes = () => {
                 {activeTab === 'podcast' ? (
                     <motion.div key="social-stage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col gap-2 min-h-0 relative">
                         {/* Interactive Stage */}
-                        <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 min-h-[520px] rounded-[3.5rem] overflow-hidden shadow-2xl border-2 border-white/10 relative bg-black perspective-[1000px]">
+                        <div onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); mouseX.set(e.clientX - r.left - r.width/2); mouseY.set(e.clientY - r.top - r.height/2); }} className="flex-1 min-h-[520px] rounded-[4rem] overflow-hidden shadow-2xl border-2 border-white/10 relative bg-black perspective-[1000px]">
                             <div className="absolute inset-0 bg-gradient-radial from-[#1e0a16] via-[#0d040a] to-[#050103] opacity-90" />
                             
                             {/* OVERLAY CHAT */}
-                            <div className="absolute left-8 top-20 bottom-8 w-[320px] bg-black/20 backdrop-blur-xl rounded-[2.5rem] border border-white/10 z-50 flex flex-col overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+                            <div className="absolute left-8 top-20 bottom-8 w-[320px] bg-black/30 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 z-50 flex flex-col overflow-hidden shadow-2xl">
                                 <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
-                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Acolhimentos Ao Vivo</span>
+                                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Acolhimentos</span>
                                     <div className="flex gap-1"> <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" /> </div>
                                 </div>
                                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar custom-scrollbar">
@@ -240,7 +246,7 @@ const RadioDasMaes = () => {
                                                 <p className="text-white/90 text-[12px] font-medium leading-snug break-words">{m.text}</p>
                                                 {m.audio && (
                                                     <button onClick={() => new Audio(m.audio).play()} className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-pink-500/20 border border-pink-500/30 rounded-full text-[9px] text-pink-300 font-black uppercase hover:bg-pink-500/40 transition-all">
-                                                        <Volume2 size={12} /> Ouvir Áudio
+                                                        <Volume2 size={12} /> Áudio
                                                     </button>
                                                 )}
                                             </div>
@@ -253,17 +259,18 @@ const RadioDasMaes = () => {
                             <motion.div style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }} className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-none">
                                 <div className="absolute inset-0 pointer-events-auto">
                                     {hasJoinedLive && Array.from({ length: 15 }).map((_, i) => <Firefly key={i} />)}
-                                    {!hasJoinedLive ? (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 z-50">
-                                            <div className="w-32 h-32 bg-white/10 rounded-[3rem] backdrop-blur-md flex items-center justify-center text-7xl shadow-2xl border border-white/20">🌙</div>
-                                            <button onClick={joinSocialRoom} className="px-14 py-5 bg-white text-pink-600 font-black rounded-3xl shadow-2xl hover:scale-110 active:scale-95 transition-all text-sm uppercase">Sintonizar Sala</button>
-                                        </div>
-                                    ) : (
-                                        <AnimatePresence>{participants.map((p, i) => ( <FloatingBubble key={p.id} participant={p} index={i} total={participants.length} isSelected={selectedTargetId === p.id} isReceivingHeart={receivingHeartId === p.id} isHugging={isHugging} onClick={() => { if (!p.isMe) setSelectedTargetId((v: any) => v === p.id ? null : p.id); }} onBubbleRef={(id: any, el: any) => { if (el) bubbleRefsMap.current.set(id, el); else bubbleRefsMap.current.delete(id); }} /> ))}</AnimatePresence>
-                                    )}
+                                    <AnimatePresence>{participants.map((p, i) => ( <FloatingBubble key={p.id} participant={p} index={i} total={participants.length} isSelected={selectedTargetId === p.id} isReceivingHeart={receivingHeartId === p.id} isHugging={isHugging} onClick={() => { if (!p.isMe) setSelectedTargetId((v: any) => v === p.id ? null : p.id); }} onBubbleRef={(id: any, el: any) => { if (el) bubbleRefsMap.current.set(id, el); else bubbleRefsMap.current.delete(id); }} /> ))}</AnimatePresence>
                                 </div>
                             </motion.div>
                             
+                            {!hasJoinedLive && (
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-40 flex items-center justify-center pointer-events-none">
+                                     <motion.button onClick={joinSocialRoom} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute bottom-8 right-8 z-[70] pointer-events-auto flex items-center gap-3 px-8 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 rounded-2xl text-[10px] font-black text-white hover:text-pink-400 uppercase tracking-widest transition-all group active:scale-95 shadow-2xl">
+                                        <LogIn size={16} /> Entrar na Sala
+                                     </motion.button>
+                                </div>
+                            )}
+
                             <div className="absolute top-6 left-8 flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 z-[60]"> <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> <span className="text-[10px] font-black text-white uppercase">{participants.length} On-line</span> </div>
                             <div className="absolute right-6 top-6 z-[60]">
                                 <button onClick={toggleAmbientMusic} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:scale-110`}> {isAmbientAudioActive ? <Pause size={20} /> : <Play size={20} />} </button>
