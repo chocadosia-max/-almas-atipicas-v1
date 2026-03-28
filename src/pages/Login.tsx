@@ -41,8 +41,12 @@ const Login = () => {
     e.preventDefault();
     
     // Proteção rigorosa de rede de apoio
-    const validCodes = ["ACOLHER26", "REDEAPOIO", "COMIGOMAE", "MAMAE2026"];
-    if (!validCodes.includes(inviteCode.toUpperCase().trim())) {
+    const codeClean = inviteCode.toUpperCase().trim();
+    const legacyCodes = ["ACOLHER26", "REDEAPOIO", "COMIGOMAE", "MAMAE2026"];
+    const isLegacy = legacyCodes.includes(codeClean);
+    const isDynamic = /^[0-9A-F]{8}$/.test(codeClean); // Aceita prefixos de IDs únicos (hexadecimal 8 caracteres)
+
+    if (!isLegacy && !isDynamic) {
       toast.error("Código de convite inválido! Peça uma palavra-chave para alguma mãe da rede.");
       return;
     }
@@ -111,7 +115,7 @@ const Login = () => {
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
                 className="w-full bg-pink-50 border border-pink-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-pink-300 font-bold uppercase"
-                placeholder="Ex: ACOLHER26"
+                placeholder="Ex: ACOLHER26 ou seu código VIP"
                 required={isSignUp}
               />
             </motion.div>

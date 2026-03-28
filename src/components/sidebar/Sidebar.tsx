@@ -79,11 +79,15 @@ const SidebarContent = () => {
   }, []);
 
   const handleConvidarMae = () => {
-    const inviteLink = `https://almas-atipicas-v1.pages.dev/login?invite=ACOLHER26`;
+    // Gerar código único baseado no ID do usuário (8 primeiros caracteres do UUID)
+    // Se não houver usuário logado (improvável no sidebar), usa fallback legado
+    const inviteCode = user?.id ? user.id.slice(0, 8).toUpperCase() : "ACOLHER26";
+    const inviteLink = `https://almas-atipicas.vercel.app/login?invite=${inviteCode}`;
+    
     const mensagem = `🌸 Olá! Venha fazer parte da Plataforma Comigo (Almas Atípicas), uma rede de apoio incrível para mães.\n\nClique no meu link VIP abaixo para criar sua conta gratuita (o código de acesso já vai preenchido):\n\n${inviteLink}`;
     
     navigator.clipboard.writeText(mensagem);
-    toast.success("Mensagem de convite copiada para a área de transferência!");
+    toast.success(`Mensagem de convite copiada! Seu código VIP é: ${inviteCode}`);
   };
 
   return (
