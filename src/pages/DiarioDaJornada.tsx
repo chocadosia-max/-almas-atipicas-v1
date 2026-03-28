@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type DiarioEntry = {
   id: string;
@@ -42,6 +43,7 @@ const DiarioDaJornada = () => {
   const [activeTab, setActiveTab] = useState<'Filho' | 'Maternidade' | 'Pessoal'>('Filho');
   const [selectedEmoji, setSelectedEmoji] = useState('🌸');
   const [phrase, setPhrase] = useState(INSPIRING_PHRASES[0]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem('diario_entradas');
@@ -54,6 +56,11 @@ const DiarioDaJornada = () => {
     }
     const idx = Math.floor(Math.random() * INSPIRING_PHRASES.length);
     setPhrase(INSPIRING_PHRASES[idx]);
+    
+    // Simular delay de conexão para exibir o skeleton feedback suave (micro-interação)
+    setTimeout(() => {
+        setIsLoading(false);
+    }, 600);
   }, []);
 
   const handleSave = () => {
@@ -123,7 +130,8 @@ const DiarioDaJornada = () => {
 
           <button 
             onClick={handleUnlock}
-            className="group relative w-full py-5 bg-gray-900 text-white font-black rounded-[2rem] shadow-2xl hover:bg-pink-600 transition-all active:scale-95 overflow-hidden flex items-center justify-center gap-3 uppercase text-xs tracking-widest"
+            aria-label="Destrancar e abrir o diário secreto"
+            className="group relative w-full py-5 bg-gray-900 text-white font-black rounded-[2rem] shadow-2xl hover:bg-pink-600 transition-all active:scale-95 overflow-hidden flex items-center justify-center gap-3 uppercase text-xs tracking-widest focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-500"
           >
             <motion.div 
               className="absolute inset-0 bg-gradient-to-r from-pink-400/20 to-transparent"
@@ -139,7 +147,7 @@ const DiarioDaJornada = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 px-4">
+    <main className="max-w-6xl mx-auto pb-20 px-4">
       {/* Opening Animation Overlay */}
       <AnimatePresence>
          <motion.div 
@@ -232,7 +240,8 @@ const DiarioDaJornada = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab as any)}
-                  className={`flex-1 py-4 px-6 rounded-[2rem] text-[10px] font-black tracking-widest uppercase transition-all ${
+                  aria-label={`Mudar categoria para ${tab}`}
+                  className={`flex-1 py-4 px-6 rounded-[2rem] text-[10px] font-black tracking-widest uppercase transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300 ${
                     activeTab === tab 
                       ? 'bg-white text-pink-600 shadow-xl scale-[1.02]' 
                       : 'text-gray-400 hover:text-gray-600'
@@ -250,7 +259,8 @@ const DiarioDaJornada = () => {
                   <button
                     key={emo.emoji}
                     onClick={() => setSelectedEmoji(emo.emoji)}
-                    className={`group flex flex-col items-center gap-2 transition-all ${
+                    aria-label={`Sentindo-se ${emo.label}`}
+                    className={`group flex flex-col items-center gap-2 transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300 rounded-[2rem] p-1 ${
                       selectedEmoji === emo.emoji ? 'scale-110' : 'opacity-40 grayscale-[50%] hover:opacity-70 hover:grayscale-0'
                     }`}
                   >
@@ -283,7 +293,8 @@ const DiarioDaJornada = () => {
                </div>
                <button
                  onClick={handleSave}
-                 className="px-10 py-5 rounded-[2rem] bg-pink-600 hover:bg-gray-900 text-white font-black flex items-center gap-3 shadow-2xl shadow-pink-500/30 transition-all active:scale-95 group"
+                 aria-label="Salvar nova página no diário"
+                 className="px-10 py-5 rounded-[2rem] bg-pink-600 hover:bg-gray-900 text-white font-black flex items-center gap-3 shadow-2xl shadow-pink-500/30 transition-all active:scale-95 group focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-400"
                >
                  <Save size={18} className="group-hover:rotate-12 transition-transform" />
                  <span className="text-xs uppercase tracking-widest">Salvar no Diário</span>
@@ -301,15 +312,30 @@ const DiarioDaJornada = () => {
                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{entries.length} Entradas</div>
             </div>
             
-            <AnimatePresence>
-              {entries.length === 0 ? (
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div key="skeleton-loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                   {Array.from({ length: 3 }).map((_, idx) => (
+                      <div key={idx} className="bg-white/60 backdrop-blur-xl rounded-[3.5rem] border border-white p-8 flex flex-col md:flex-row gap-6 items-start md:items-center">
+                         <Skeleton className="w-20 h-20 rounded-[2.5rem] bg-pink-100/50 shrink-0" />
+                         <div className="flex-1 space-y-4">
+                            <Skeleton className="h-4 w-24 bg-pink-100/50 rounded-full" />
+                            <div className="space-y-2">
+                               <Skeleton className="h-3 w-3/4 bg-gray-100 rounded-full" />
+                               <Skeleton className="h-3 w-1/2 bg-gray-100 rounded-full" />
+                            </div>
+                         </div>
+                      </div>
+                   ))}
+                </motion.div>
+              ) : entries.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20 bg-white/20 backdrop-blur-sm rounded-[4rem] border-2 border-dashed border-white/50 text-gray-400 flex flex-col items-center gap-4">
                   <div className="w-20 h-20 bg-white/50 rounded-full flex items-center justify-center text-4xl shadow-xl shadow-pink-500/5 mb-4">📝</div>
                   <p className="font-black text-sm uppercase tracking-widest">Seu diário ainda está em silêncio...</p>
                   <p className="text-xs text-gray-400 max-w-[240px] leading-relaxed">As memórias que você guardar hoje serão tesouros amanhã.</p>
                 </motion.div>
               ) : (
-                <div className="grid grid-cols-1 gap-6">
+                <motion.div key="entries-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-6">
                   {entries.map((entry, i) => (
                     <motion.div 
                       key={entry.id} 
@@ -340,18 +366,19 @@ const DiarioDaJornada = () => {
                         </div>
                         <button 
                           onClick={() => handleDelete(entry.id)}
-                          className="opacity-0 group-hover:opacity-100 p-4 text-gray-300 hover:text-red-500 bg-gray-50 rounded-full transition-all hover:bg-red-50"
+                          aria-label="Excluir esta página do diário"
+                          className="opacity-0 group-hover:opacity-100 p-4 text-gray-300 hover:text-red-500 bg-gray-50 rounded-full transition-all hover:bg-red-50 focus:opacity-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-red-200"
                         >
                           <Trash2 size={20} />
                         </button>
                       </div>
                       
-                      <div className="relative">
+                      <article className="relative">
                         <div className="absolute -top-2 -left-2 w-8 h-8 bg-pink-500/5 rounded-full blur-xl" />
                         <p className="text-gray-700 font-medium leading-[1.8] text-sm whitespace-pre-wrap relative z-10 pl-2">
                           {entry.text}
                         </p>
-                      </div>
+                      </article>
                       
                       <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
                          <div className="flex gap-1 text-pink-500">
@@ -362,14 +389,14 @@ const DiarioDaJornada = () => {
                       </div>
                     </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
 
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

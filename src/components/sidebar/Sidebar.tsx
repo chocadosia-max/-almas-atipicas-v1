@@ -90,10 +90,14 @@ const SidebarContent = () => {
     <div className="flex flex-col h-full py-6">
       {/* Top Profile Card */}
       <motion.div 
+        role="button"
+        tabIndex={0}
+        aria-label="Abrir modal de configuração do perfil"
         onClick={() => { setEditProfile(localProfile); setIsProfileModalOpen(true); }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setEditProfile(localProfile); setIsProfileModalOpen(true); } }}
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="mx-4 mb-8 p-4 rounded-2xl bg-white border border-pink-100 shadow-sm group cursor-pointer hover:shadow-md transition-all"
+        className="mx-4 mb-8 p-4 rounded-2xl bg-white border border-pink-100 shadow-sm group cursor-pointer hover:shadow-md transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300"
       >
         <div className="flex items-center gap-3 relative">
           <div className="relative w-12 h-12 rounded-full bg-gradient-to-tr from-[var(--rosa-forte)] to-[var(--rosa-medio)] flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform">
@@ -119,7 +123,8 @@ const SidebarContent = () => {
       <div className="px-4 mb-6">
         <button 
           onClick={handleConvidarMae}
-          className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 shadow-[0_10px_25px_rgba(245,158,11,0.4)] text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 group"
+          aria-label="Gerar e copiar convite para a plataforma"
+          className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 shadow-[0_10px_25px_rgba(245,158,11,0.4)] text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 group focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
         >
           <Sparkles size={18} className="group-hover:animate-pulse" />
           CONVIDAR UMA MÃE
@@ -137,7 +142,12 @@ const SidebarContent = () => {
               {group.items.map((item, j) => {
                 const isActive = location.pathname.startsWith(item.path);
                 return (
-                  <Link key={j} to={item.path}>
+                  <Link 
+                    key={j} 
+                    to={item.path} 
+                    className="block outline-none rounded-xl focus-visible:ring-4 focus-visible:ring-pink-300 focus-visible:ring-offset-1"
+                    aria-label={`Ir para a página ${item.name}`}
+                  >
                     <motion.div
                       whileHover={{ x: 4 }}
                       whileTap={{ scale: 0.98 }}
@@ -181,7 +191,11 @@ const SidebarContent = () => {
       {/* Bottom Actions */}
       <div className="px-4 mt-auto pt-6 space-y-3">
         {isAdmin && (
-          <Link to="/admin/dashboard">
+          <Link 
+            to="/admin/dashboard" 
+            className="block outline-none rounded-xl focus-visible:ring-4 focus-visible:ring-pink-300"
+            aria-label="Acessar painel de administração"
+          >
             <motion.div 
               whileHover={{ scale: 1.02 }}
               className="flex items-center gap-2 p-3 rounded-xl border-2 border-dashed border-[var(--rosa-forte)]/30 bg-[var(--rosa-forte)]/5 text-[var(--rosa-forte)] font-black text-xs uppercase text-center justify-center transition-all hover:bg-[var(--rosa-forte)]/10"
@@ -192,7 +206,11 @@ const SidebarContent = () => {
           </Link>
         )}
         
-        <Link to="/crise">
+        <Link 
+          to="/crise" 
+          className="block outline-none rounded-2xl focus-visible:ring-4 focus-visible:ring-red-400"
+          aria-label="Acessar apoio e ferramentas de emergência"
+        >
           <motion.div 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -205,7 +223,8 @@ const SidebarContent = () => {
         
         <button 
           onClick={() => signOut()} 
-          className="w-full flex items-center gap-2 p-3 rounded-xl text-[var(--texto-medio)] font-bold text-xs bg-white border border-pink-100 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all group"
+          aria-label="Fazer logoff"
+          className="w-full flex items-center gap-2 p-3 rounded-xl text-[var(--texto-medio)] font-bold text-xs bg-white border border-pink-100 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all group focus:outline-none focus-visible:ring-4 focus-visible:ring-red-200 active:scale-95"
         >
           <LogOut size={16} className="group-hover:rotate-180 transition-transform duration-500" />
           Sair da Conta
@@ -216,17 +235,24 @@ const SidebarContent = () => {
       {isProfileModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <motion.div 
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-perfil-titulo"
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className="w-full max-w-sm bg-white rounded-[2rem] p-6 shadow-2xl border border-pink-100 relative overflow-hidden"
           >
-            <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-gray-900 transition-colors">
+            <button 
+              onClick={() => setIsProfileModalOpen(false)} 
+              aria-label="Fechar modal de perfil"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-gray-900 transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300"
+            >
                <X size={16} />
             </button>
             
             <div className="flex items-center justify-between mb-6">
-               <h3 className="text-xl font-black text-gray-900 font-serif m-0">Seu <span className="text-pink-500 italic">Perfil</span></h3>
+               <h3 id="modal-perfil-titulo" className="text-xl font-black text-gray-900 font-serif m-0">Seu <span className="text-pink-500 italic">Perfil</span></h3>
                {editProfile.isEmpreendedora && (
                   <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full shadow-sm">
                      <span className="text-sm">👑</span>
@@ -242,7 +268,10 @@ const SidebarContent = () => {
                 ) : (
                    <User size={40} className="text-white" />
                 )}
-                <label className="absolute bottom-0 right-0 w-8 h-8 bg-white text-pink-600 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform border border-pink-100">
+                <label 
+                  aria-label="Alterar foto de perfil"
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-white text-pink-600 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform border border-pink-100 focus-within:ring-4 focus-within:ring-pink-300"
+                >
                    <Camera size={14} />
                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -286,7 +315,8 @@ const SidebarContent = () => {
                  setIsProfileModalOpen(false);
                  toast.success('Perfil atualizado com sucesso!');
               }}
-              className="w-full mt-6 py-4 bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg shadow-pink-500/30"
+              aria-label="Salvar alterações do perfil"
+              className="w-full mt-6 py-4 bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg shadow-pink-500/30 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-500"
             >
                <Save size={16} /> Salvar Perfil
             </button>
@@ -316,7 +346,8 @@ export const Sidebar = () => {
           <SheetTrigger asChild>
             <motion.button 
               whileTap={{ scale: 0.9 }}
-              className="p-2 text-white bg-white/10 rounded-xl"
+              aria-label="Abrir menu de navegação"
+              className="p-2 text-white bg-white/10 rounded-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-white"
             >
               <Menu size={24} />
             </motion.button>

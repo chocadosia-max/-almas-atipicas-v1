@@ -223,12 +223,20 @@ const MomentoPausa = () => {
         
         {/* HEADER */}
         <div className="w-full p-6 md:p-8 flex justify-between items-center text-white/90">
-          <button onClick={handleVoltar} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md px-6 py-3 rounded-full transition-all font-black text-sm uppercase tracking-widest border border-white/20 shadow-lg">
+          <button 
+            onClick={handleVoltar} 
+            aria-label="Voltar para a página anterior"
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md px-6 py-3 rounded-full transition-all font-black text-sm uppercase tracking-widest border border-white/20 shadow-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-white/50"
+          >
             <ArrowLeft size={18} strokeWidth={3} /> VOLTAR
           </button>
           
           {isAdmin && (
-            <button onClick={() => setShowAdminPanel(true)} className="p-3 bg-white/10 hover:bg-[#D4537E] rounded-2xl border border-white/20 transition-all text-white shadow-lg flex items-center gap-2 font-bold text-xs">
+            <button 
+              onClick={() => setShowAdminPanel(true)} 
+              aria-label="Abrir painel de gestão de músicas"
+              className="p-3 bg-white/10 hover:bg-[#D4537E] rounded-2xl border border-white/20 transition-all text-white shadow-lg flex items-center gap-2 font-bold text-xs focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-400"
+            >
               <Settings size={18} /> GESTÃO DE MÚSICA
             </button>
           )}
@@ -249,7 +257,13 @@ const MomentoPausa = () => {
                   ].map((btn) => {
                     const Ic = btn.icon;
                     return (
-                      <motion.button key={btn.id} whileHover={{ y: -8, background: 'rgba(255,255,255,0.15)' }} onClick={() => setMode(btn.id as any)} className={`p-10 md:p-12 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[3rem] flex flex-col items-center transition-all ${btn.color} shadow-2xl`}>
+                      <motion.button 
+                        key={btn.id} 
+                        aria-label={`Selecionar ferramenta ${btn.label}`}
+                        whileHover={{ y: -8, background: 'rgba(255,255,255,0.15)' }} 
+                        onClick={() => setMode(btn.id as any)} 
+                        className={`p-10 md:p-12 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[3rem] flex flex-col items-center transition-all ${btn.color} shadow-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-white/50`}
+                      >
                         <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-[var(--rosa-forte)] mb-6 shadow-xl"><Ic size={36} /></div>
                         <h3 className="text-white font-black text-xl tracking-tight uppercase tracking-widest text-sm">{btn.label}</h3>
                       </motion.button>
@@ -267,7 +281,13 @@ const MomentoPausa = () => {
                     <h2 className="text-white text-5xl font-serif font-black italic">{breathingText}</h2>
                   </div>
                 </div>
-                <button onClick={() => setMode('intro')} className="px-10 py-4 bg-white/10 hover:bg-white text-white hover:text-[var(--rosa-forte)] font-black text-sm uppercase tracking-widest rounded-3xl transition-all border border-white/20 shadow-xl">Finalizar</button>
+                <button 
+                  onClick={() => setMode('intro')} 
+                  aria-label="Finalizar exercício de respiração"
+                  className="px-10 py-4 bg-white/10 hover:bg-white text-white hover:text-[var(--rosa-forte)] font-black text-sm uppercase tracking-widest rounded-3xl transition-all border border-white/20 shadow-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-white/50 active:scale-95"
+                >
+                  Finalizar
+                </button>
               </motion.div>
             )}
 
@@ -278,8 +298,20 @@ const MomentoPausa = () => {
                    <motion.p key={affIndex} initial={{ opacity: 0, filter: 'blur(15px)' }} animate={{ opacity: 1, filter: 'blur(0px)' }} exit={{ opacity: 0, filter: 'blur(15px)' }} transition={{ duration: 1.5 }} className="text-4xl md:text-5xl font-medium text-white font-serif italic max-w-3xl px-6 leading-tight">"{AFFIRMATIONS[affIndex]}"</motion.p>
                 </AnimatePresence>
                 <div className="flex gap-6 mt-16">
-                   <button onClick={() => setAffIndex(prev => (prev + 1) % AFFIRMATIONS.length)} className="w-16 h-16 bg-white/10 hover:bg-white/20 rounded-full text-white border border-white/20 flex items-center justify-center transition-all shadow-md"><RefreshCw size={24} /></button>
-                   <button onClick={() => setMode('intro')} className="px-10 py-4 bg-white text-[var(--rosa-forte)] font-black rounded-3xl shadow-2xl text-sm uppercase tracking-widest hover:scale-105 transition-all">Finalizar</button>
+                   <button 
+                     onClick={() => setAffIndex(prev => (prev + 1) % AFFIRMATIONS.length)} 
+                     aria-label="Carregar próxima afirmação"
+                     className="w-16 h-16 bg-white/10 hover:bg-white/20 rounded-full text-white border border-white/20 flex items-center justify-center transition-all shadow-md focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 active:scale-90"
+                   >
+                     <RefreshCw size={24} />
+                   </button>
+                   <button 
+                     onClick={() => setMode('intro')} 
+                     aria-label="Finalizar modo de afirmações"
+                     className="px-10 py-4 bg-white text-[var(--rosa-forte)] font-black rounded-3xl shadow-2xl text-sm uppercase tracking-widest hover:scale-105 transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300 active:scale-95"
+                   >
+                     Finalizar
+                   </button>
                 </div>
               </motion.div>
             )}
@@ -308,10 +340,25 @@ const MomentoPausa = () => {
                   </AnimatePresence>
                 </div>
                 <div className="relative w-full max-w-lg bg-white/10 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 p-5 shadow-2xl transition-all">
-                  <textarea disabled={isExploding} value={ventText} onChange={(e) => setVentText(e.target.value)} className="w-full h-16 bg-transparent text-white placeholder-white/30 text-lg outline-none font-medium italic overflow-hidden resize-none" placeholder="O que está pesando no seu coração? Digite sem medo..." />
+                  <textarea 
+                    disabled={isExploding} 
+                    value={ventText} 
+                    onChange={(e) => setVentText(e.target.value)} 
+                    aria-label="Campo de texto para desabafo"
+                    aria-invalid="false"
+                    className="w-full h-16 bg-transparent text-white placeholder-white/30 text-lg outline-none font-medium italic overflow-hidden resize-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-lg p-2" 
+                    placeholder="O que está pesando no seu coração? Digite sem medo..." 
+                  />
                   <div className="flex justify-between items-center mt-3 border-t border-white/10 pt-3">
                     <div className="text-[10px] font-black uppercase text-white/40 tracking-[3px]">{ventText.length} tons de peso</div>
-                    <button onClick={handleExplode} disabled={!ventText || isExploding} className="bg-red-500 hover:bg-red-600 text-white font-black px-6 py-2.5 rounded-xl shadow-xl disabled:opacity-30 text-[10px] md:text-xs uppercase tracking-widest transition-all">LIBERAR PESO 💨</button>
+                    <button 
+                      onClick={handleExplode} 
+                      disabled={!ventText || isExploding} 
+                      aria-label="Liberar peso enviando o desabafo"
+                      className="bg-red-500 hover:bg-red-600 text-white font-black px-6 py-2.5 rounded-xl shadow-xl disabled:opacity-30 text-[10px] md:text-xs uppercase tracking-widest transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-red-300 active:scale-95"
+                    >
+                      LIBERAR PESO 💨
+                    </button>
                   </div>
                 </div>
               </motion.div>
@@ -327,11 +374,22 @@ const MomentoPausa = () => {
                </div>
                
                <div className="flex flex-col gap-3">
-                 <button onClick={togglePlay} disabled={audios.length === 0} className={`w-14 h-14 rounded-full shadow-2xl transition-all flex items-center justify-center hover:scale-110 active:scale-95 ${isPlaying ? 'bg-white text-[#D4537E]' : 'bg-[#D4537E] text-white hover:bg-[#b04366]'}`}>
+                 <button 
+                   onClick={togglePlay} 
+                   disabled={audios.length === 0} 
+                   aria-label={isPlaying ? 'Pausar música ambiente' : 'Tocar música ambiente'}
+                   className={`w-14 h-14 rounded-full shadow-2xl transition-all flex items-center justify-center hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/50 ${isPlaying ? 'bg-white text-[#D4537E]' : 'bg-[#D4537E] text-white hover:bg-[#b04366]'}`}
+                 >
                    {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}
                  </button>
                  
-                 <button onClick={nextTrack} disabled={audios.length <= 1} className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full border border-white/20 text-white flex items-center justify-center transition-all hover:rotate-12 active:scale-90" title="Próxima Música">
+                 <button 
+                   onClick={nextTrack} 
+                   disabled={audios.length <= 1} 
+                   aria-label="Próxima música ambiente"
+                   title="Próxima Música"
+                   className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full border border-white/20 text-white flex items-center justify-center transition-all hover:rotate-12 active:scale-90 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/50"
+                 >
                    <SkipForward size={22} />
                  </button>
                </div>

@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { toast } from "sonner";
 import { supabase } from '../integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /* ─── Constants ─── */
 const MAX_BUBBLE_SCALE = 1.4;
@@ -36,7 +37,19 @@ const FloatingBubble = ({ participant, index, total, isSelected, isReceivingHear
     const bubblePx = Math.round(BASE_BUBBLE_SIZE * heartScale);
     if (!participant) return null;
     return (
-      <motion.div ref={el => onBubbleRef(participant.id, el)} initial={{ scale: 0, opacity: 0 }} animate={isReceivingHeart ? { scale: [heartScale, heartScale * 1.4, heartScale], opacity: 1 } : { scale: heartScale, opacity: 1, y: [0, -10, 0, 10, 0] }} transition={{ scale: { type: 'spring', stiffness: 260, damping: 20 }, y: { duration: 5 + index * 0.4, repeat: Infinity, ease: 'easeInOut' }, left: { type: 'spring', stiffness: 60, damping: 25 }, top: { type: 'spring', stiffness: 60, damping: 25 } }} className="absolute flex flex-col items-center gap-2 cursor-pointer z-30 transform -translate-x-1/2 -translate-y-1/2" style={{ left: `${cx}%`, top: `${cy}%` }} onClick={() => onClick(participant.id)}>
+      <motion.div 
+        ref={el => onBubbleRef(participant.id, el)} 
+        initial={{ scale: 0, opacity: 0 }} 
+        animate={isReceivingHeart ? { scale: [heartScale, heartScale * 1.4, heartScale], opacity: 1 } : { scale: heartScale, opacity: 1, y: [0, -10, 0, 10, 0] }} 
+        transition={{ scale: { type: 'spring', stiffness: 260, damping: 20 }, y: { duration: 5 + index * 0.4, repeat: Infinity, ease: 'easeInOut' }, left: { type: 'spring', stiffness: 60, damping: 25 }, top: { type: 'spring', stiffness: 60, damping: 25 } }} 
+        className="absolute flex flex-col items-center gap-2 cursor-pointer z-30 transform -translate-x-1/2 -translate-y-1/2 focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300 rounded-full" 
+        style={{ left: `${cx}%`, top: `${cy}%` }} 
+        onClick={() => onClick(participant.id)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(participant.id); }}
+        role="button"
+        tabIndex={0}
+        aria-label={`Selecionar mãe ${participant.name || 'desconhecida'}`}
+      >
         <AnimatePresence>{isSelected && !participant.isMe && ( <motion.div key="selection-ring" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: [1, 1.25, 1], opacity: [0.4, 0.8, 0.4] }} exit={{ scale: 0.8, opacity: 0 }} transition={{ repeat: Infinity, duration: 2 }} className="absolute rounded-full border-2 border-dashed border-pink-400/50" style={{ width: bubblePx + 24, height: bubblePx + 24, top: -12, left: -12 }} /> )}</AnimatePresence>
         {participant.mood && <motion.div className="absolute -top-4 -right-2 bg-white shadow-xl rounded-full w-6 h-6 flex items-center justify-center text-xs border border-pink-100 z-40">{participant.mood}</motion.div>}
         <motion.div whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }} animate={{ width: bubblePx, height: bubblePx }} transition={{ type: 'spring' }} className="rounded-full flex items-center justify-center shadow-2xl border-4 border-white/40 overflow-hidden relative bg-gradient-to-br from-pink-300 via-rose-500 to-rose-700">
@@ -69,13 +82,25 @@ const MuralCard = ({ card, onPlay, onDelete, isMine }: any) => {
                   </div>
                 </div>
                 {isMine && (
-                   <button onClick={() => onDelete(card.id)} className="w-10 h-10 flex items-center justify-center text-red-300 hover:text-red-500 bg-red-50/50 hover:bg-red-50 rounded-xl transition-all shadow-sm border border-red-100/50" title="Excluir desabafo">
+                   <button 
+                     onClick={() => onDelete(card.id)} 
+                     aria-label="Excluir desabafo"
+                     className="w-10 h-10 flex items-center justify-center text-red-300 hover:text-red-500 bg-red-50/50 hover:bg-red-50 rounded-xl transition-all shadow-sm border border-red-100/50 focus:outline-none focus-visible:ring-4 focus-visible:ring-red-200" 
+                     title="Excluir desabafo"
+                   >
                       <Trash2 size={18} />
                    </button>
                 )}
             </div>
             
-            <div className="w-full bg-pink-100/50 p-6 rounded-[2rem] border border-white/50 relative group/btn cursor-pointer overflow-hidden transition-all hover:bg-pink-100" onClick={() => onPlay(card.audioData)}>
+            <div 
+              className="w-full bg-pink-100/50 p-6 rounded-[2rem] border border-white/50 relative group/btn cursor-pointer overflow-hidden transition-all hover:bg-pink-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300" 
+              onClick={() => onPlay(card.audioData)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onPlay(card.audioData); }}
+              aria-label={`Ouvir mensagem de voz de ${card.author}`}
+            >
                <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity" />
                <div className="flex items-center justify-between">
                   <div className="flex flex-col">
@@ -123,6 +148,7 @@ const RadioDasMaes = () => {
     const [petals, setPetals] = useState<number[]>([]);
     const [isConnecting, setIsConnecting] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [isLoadingMural, setIsLoadingMural] = useState(true);
 
     const mouseX = useMotionValue(0); const mouseY = useMotionValue(0);
     const rotateX = useTransform(useSpring(mouseY, { damping: 20, stiffness: 100 }), [-400, 400], [8, -8]);
@@ -142,7 +168,11 @@ const RadioDasMaes = () => {
 
     useEffect(() => {
        const saved = localStorage.getItem(MURAL_STORAGE_KEY);
-       if (saved) setDesabafos(JSON.parse(saved));
+       if (saved) {
+           setDesabafos(JSON.parse(saved));
+       }
+       // Simular loading state para feedback suave
+       setTimeout(() => setIsLoadingMural(false), 800);
     }, []);
 
     const joinSocialRoom = useCallback(async () => {
@@ -236,7 +266,7 @@ const RadioDasMaes = () => {
     useEffect(() => { if (chatContainerRef.current) chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight; }, [chatMessages]);
 
     return (
-        <div className="w-full max-w-7xl mx-auto min-h-[calc(100vh-60px)] flex flex-col p-2 pb-12 bg-transparent">
+        <main className="w-full max-w-7xl mx-auto min-h-[calc(100vh-60px)] flex flex-col p-2 pb-12 bg-transparent">
             {/* Particles */}
             <AnimatePresence> {petals.map(id => (
               <motion.div key={id} initial={{ top: '-10%', left: `${Math.random() * 100}%`, opacity: 0 }} animate={{ top: '110%', opacity: [0, 1, 1, 0], rotate: 360 }} transition={{ duration: 7 }} className="fixed pointer-events-none text-2xl z-[101]" onAnimationComplete={() => setPetals(p => p.filter(x => x !== id))}>🌸</motion.div>
@@ -249,8 +279,20 @@ const RadioDasMaes = () => {
                     <div className="flex flex-col"><span className="text-[8px] font-black text-pink-500 uppercase tracking-tighter leading-none">Comunidade Almas Atípicas</span><h1 className="text-sm font-black text-gray-800 leading-none tracking-tight uppercase">Chat de Acolhimento</h1></div>
                 </div>
                 <div className="flex bg-black/5 p-1 rounded-xl border border-black/5">
-                    <button onClick={() => setActiveTab('chat')} className={`px-6 py-2 rounded-lg text-[10px] font-black transition-all tracking-widest uppercase ${activeTab === 'chat' ? 'bg-white text-pink-500 shadow-sm scale-105' : 'text-gray-400'}`}>Chat Ao Vivo</button>
-                    <button onClick={() => setActiveTab('mural')} className={`px-6 py-2 rounded-lg text-[10px] font-black transition-all tracking-widest uppercase ${activeTab === 'mural' ? 'bg-white text-pink-500 shadow-sm scale-105' : 'text-gray-400'}`}>Mural de Apoio</button>
+                    <button 
+                      onClick={() => setActiveTab('chat')} 
+                      aria-label="Abrir chat ao vivo" 
+                      className={`px-6 py-2 rounded-lg text-[10px] font-black transition-all tracking-widest uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 ${activeTab === 'chat' ? 'bg-white text-pink-500 shadow-sm scale-105' : 'text-gray-400'}`}
+                    >
+                      Chat Ao Vivo
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('mural')} 
+                      aria-label="Abrir mural de apoio" 
+                      className={`px-6 py-2 rounded-lg text-[10px] font-black transition-all tracking-widest uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 ${activeTab === 'mural' ? 'bg-white text-pink-500 shadow-sm scale-105' : 'text-gray-400'}`}
+                    >
+                      Mural de Apoio
+                    </button>
                 </div>
             </div>
 
@@ -286,7 +328,14 @@ const RadioDasMaes = () => {
                             
                             {!hasJoinedLive && (
                                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-[55] flex items-center justify-center pointer-events-none">
-                                     <button onClick={joinSocialRoom} disabled={isConnecting} className="absolute bottom-6 right-6 z-[100] pointer-events-auto flex items-center gap-3 px-8 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-3xl border border-white/20 rounded-2xl text-[9px] font-black text-white hover:text-pink-400 transition-all uppercase tracking-[0.2em] leading-none shadow-2xl active:scale-95 group"> {isConnecting ? <Activity size={14} className="animate-spin" /> : <LogIn size={14} className="group-hover:translate-x-1 transition-transform" />} {isConnecting ? 'Sincronizando...' : 'Conectar ao Chat'} </button>
+                                     <button 
+                                       onClick={joinSocialRoom} 
+                                       disabled={isConnecting} 
+                                       aria-label="Conectar ao chat de acolhimento"
+                                       className="absolute bottom-6 right-6 z-[100] pointer-events-auto flex items-center gap-3 px-8 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-3xl border border-white/20 rounded-2xl text-[9px] font-black text-white hover:text-pink-400 transition-all uppercase tracking-[0.2em] leading-none shadow-2xl active:scale-95 group focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300"
+                                     > 
+                                       {isConnecting ? <Activity size={14} className="animate-spin" /> : <LogIn size={14} className="group-hover:translate-x-1 transition-transform" />} {isConnecting ? 'Sincronizando...' : 'Conectar ao Chat'} 
+                                     </button>
                                 </div>
                             )}
                         </div>
@@ -301,10 +350,10 @@ const RadioDasMaes = () => {
                                 <div className="flex-1 flex gap-1.5 px-3 py-1 bg-white/20 rounded-2xl overflow-x-auto no-scrollbar justify-center"> {moodEmojis.map(m => ( <button key={m} onClick={() => { if (!hasJoinedLive) return; channelRef.current?.send({ type: 'broadcast', event: 'update-mood', payload: { userId: userId.current, emoji: m } }); setParticipants(prev => prev.map(p => p.isMe ? { ...p, mood: m } : p)); }} className="w-8 h-8 flex items-center justify-center hover:scale-150 transition-all text-sm outline-none">{m}</button> ))} </div>
                                 <div className="flex gap-4 items-center">
                                     <div className="w-[380px] flex items-center bg-white border-2 border-white/50 rounded-full px-2 py-1 shadow-2xl focus-within:ring-4 ring-pink-500/10 focus-within:border-pink-200 transition-all">
-                                        <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} placeholder="Escreva uma palavra de apoio..." className="flex-1 bg-transparent px-6 py-2 text-xs text-gray-800 placeholder:text-gray-400 outline-none font-bold" />
-                                        <button onClick={handleSendMessage} className="w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center hover:bg-pink-600 hover:scale-110 shadow-lg transition-all"><Send size={16} /></button>
+                                        <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} aria-label="Digitar uma palavra de apoio" placeholder="Escreva uma palavra de apoio..." className="flex-1 bg-transparent px-6 py-2 text-xs text-gray-800 placeholder:text-gray-400 outline-none font-bold" />
+                                        <button onClick={handleSendMessage} aria-label="Enviar mensagem" className="w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center hover:bg-pink-600 hover:scale-110 shadow-lg transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300"><Send size={16} /></button>
                                     </div>
-                                    <button onClick={handleSendHeart} disabled={!selectedTargetId} className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl transition-all ${selectedTargetId ? 'bg-white text-pink-500 scale-110 border border-pink-100' : 'bg-gray-100/50 opacity-40'}`}> <Heart size={20} fill={selectedTargetId ? "currentColor" : "none"} /> </button>
+                                    <button onClick={handleSendHeart} disabled={!selectedTargetId} aria-label="Enviar coração" className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-300 ${selectedTargetId ? 'bg-white text-pink-500 scale-110 border border-pink-100' : 'bg-gray-100/50 opacity-40'}`}> <Heart size={20} fill={selectedTargetId ? "currentColor" : "none"} /> </button>
                                 </div>
                             </div>
                         </div>
@@ -320,18 +369,42 @@ const RadioDasMaes = () => {
                               </div>
                               <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2"><Sparkles size={14} className="text-pink-300" /> Sintonize com outras jornadas</p>
                            </div>
-                           <button onClick={toggleRecording} className={`flex items-center gap-3 px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-900 text-white hover:bg-pink-600'}`}>
+                           <button 
+                             onClick={toggleRecording} 
+                             aria-label={isRecording ? "Parar e pendurar gravação" : "Pendurar desabafo (gravar áudio)"}
+                             className={`flex items-center gap-3 px-8 py-4 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all shadow-2xl focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-400 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-900 text-white hover:bg-pink-600'}`}
+                           >
                                {isRecording ? <StopCircle size={20} /> : <Anchor size={20} />}
                                {isRecording ? 'PARAR E PENDURAR' : 'PENDURAR DESABAFO'}
                            </button>
                         </div>
                         <div className="w-full h-fit grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                             {desabafos.length === 0 ? ( <div className="col-span-full h-full min-h-[400px] flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} isMine={d.author.toLowerCase().trim() === myName.toLowerCase().trim()} card={d} onDelete={handleDeleteCard} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
+                             {isLoadingMural ? (
+                                Array.from({ length: 4 }).map((_, idx) => (
+                                    <div key={idx} className="bg-white/60 p-6 rounded-[2.5rem] border border-white flex flex-col gap-5 min-h-[260px] animate-pulse">
+                                        <div className="flex items-center gap-3">
+                                            <Skeleton className="w-14 h-14 rounded-2xl bg-pink-100/50" />
+                                            <div className="flex flex-col gap-2">
+                                                <Skeleton className="h-4 w-20 bg-pink-100/50 rounded-full" />
+                                                <Skeleton className="h-2 w-16 bg-gray-100 rounded-full" />
+                                            </div>
+                                        </div>
+                                        <Skeleton className="w-full h-24 rounded-[2rem] bg-pink-100/50" />
+                                        <div className="flex justify-between items-center mt-auto">
+                                            <Skeleton className="h-3 w-24 bg-gray-100 rounded-full" />
+                                            <div className="flex gap-2">
+                                                <Skeleton className="w-4 h-4 rounded-full bg-gray-100" />
+                                                <Skeleton className="w-4 h-4 rounded-full bg-gray-100" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                             ) : desabafos.length === 0 ? ( <div className="col-span-full h-full min-h-[400px] flex flex-col items-center justify-center text-gray-300 gap-4 opacity-30"><div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-5xl">🌌</div><span className="font-black text-xs uppercase tracking-widest">Aguardando colheitas...</span></div> ) : ( desabafos.map(d => <MuralCard key={d.id} isMine={d.author.toLowerCase().trim() === myName.toLowerCase().trim()} card={d} onDelete={handleDeleteCard} onPlay={(a: string) => { joinSocialRoom(); new Audio(a).play(); }} />) )}
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </main>
     );
 };
 
