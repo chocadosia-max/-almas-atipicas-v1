@@ -103,6 +103,9 @@ const EstouEmCrise = () => {
           <Link to="/rede-de-maes" className="bg-transparent border-2 border-white/30 hover:bg-white/10 text-white py-5 px-6 rounded-3xl font-black text-xl flex items-center justify-center gap-4 transition-all active:scale-95 md:col-span-2 mt-4">
              <Users className="w-8 h-8"/> Preciso de uma mão amiga
           </Link>
+          <p className="md:col-span-2 text-center text-xs text-pink-300/70 font-medium px-4 -mt-2">
+            ⚠️ A Rede de Mães é um espaço de apoio emocional entre pares e <strong>não substitui atendimento psicológico profissional</strong>. Em situação de risco imediato, ligue para o CVV (188) ou SAMU (192).
+          </p>
         </div>
       </div>
     </div>

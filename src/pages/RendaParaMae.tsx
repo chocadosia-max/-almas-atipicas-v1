@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Briefcase, 
   Store, 
@@ -172,8 +172,8 @@ const RendaParaMae = () => {
       
       // Dados do Autor no momento da postagem (Snap)
       autor: {
-        nome: profile.nomeEmpreendedora || 'Mãe Empreendedora',
-        empresa: profile.nomeEmpresa || 'Negócio Próprio',
+        nome: profile.nomeEmpreendedora || 'MÃ£e Empreendedora',
+        empresa: profile.nomeEmpresa || 'NegÃ³cio PrÃ³prio',
         cidade: profile.cidade,
         estado: profile.estado,
         whatsapp: profile.whatsapp,
@@ -219,7 +219,7 @@ const RendaParaMae = () => {
     if (newVal) {
       setShowFlowers(true);
       setTimeout(() => setShowFlowers(false), 5000);
-      toast.success("Identidade Empreendedora Ativada! 🌸");
+      toast.success("Identidade Empreendedora Ativada! ðŸŒ¸");
     } else {
       toast.info("Modo Empreendedora desativado.");
     }
@@ -240,7 +240,7 @@ const RendaParaMae = () => {
                  transition={{ duration: 3 + Math.random() * 2, ease: 'linear' }}
                  className="absolute text-3xl"
                >
-                 {['🌸', '🌺', '🐝', '✨'][Math.floor(Math.random() * 4)]}
+                 {['ðŸŒ¸', 'ðŸŒº', 'ðŸ', 'âœ¨'][Math.floor(Math.random() * 4)]}
                </motion.div>
              ))}
            </div>
@@ -266,12 +266,12 @@ const RendaParaMae = () => {
           Sua <span className="text-[var(--rosa-forte)]">Liberdade</span> Financeira
         </h1>
         <p className="text-[var(--texto-medio)] max-w-2xl mx-auto text-lg mb-10 font-medium">
-          Oportunidades de renda pensadas para mães atípicas. Conecte-se com empreendedoras que entendem a sua realidade.
+          Oportunidades de renda pensadas para mÃ£es atÃ­picas. Conecte-se com empreendedoras que entendem a sua realidade.
         </p>
 
         <div className="flex justify-center gap-3 bg-[var(--ativo-bg)] p-1.5 rounded-2xl border border-[var(--rosa-medio)]/10 shadow-inner max-w-sm mx-auto">
            <button onClick={() => setActiveTab('vagas')} className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'vagas' ? 'bg-white text-[var(--rosa-forte)] shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>Oportunidades</button>
-           <button onClick={() => setActiveTab('perfil')} className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'perfil' ? 'bg-white text-[var(--rosa-forte)] shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>Empresária</button>
+           <button onClick={() => setActiveTab('perfil')} className={`flex-1 py-3 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'perfil' ? 'bg-white text-[var(--rosa-forte)] shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>EmpresÃ¡ria</button>
         </div>
       </div>
 
@@ -289,7 +289,7 @@ const RendaParaMae = () => {
                        <div className="w-40 h-40 bg-pink-50 rounded-[2.5rem] shadow-xl border-4 border-white flex items-center justify-center overflow-hidden relative">
                           {profile.avatarBase64 ? (
                             <>
-                              {/* Imagem com alinhamento Customizado e Grade do Instagram no modo Edição */}
+                              {/* Imagem com alinhamento Customizado e Grade do Instagram no modo EdiÃ§Ã£o */}
                               <div className="absolute inset-0 z-0">
                                  <div 
                                    className="w-full h-full bg-no-repeat bg-cover"
@@ -313,7 +313,7 @@ const RendaParaMae = () => {
                              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                           </label>
                        </div>
-                       {profile.isEmpreendedora && <div className="absolute top-0 -right-3 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl border-2 border-amber-300 z-30">👑</div>}
+                       {profile.isEmpreendedora && <div className="absolute top-0 -right-3 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl border-2 border-amber-300 z-30">ðŸ‘‘</div>}
                        
                        {profile.avatarBase64 && (
                           <div className="mt-4 w-full">
@@ -328,11 +328,11 @@ const RendaParaMae = () => {
                                {showCropper && (
                                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="flex flex-col gap-2 p-3 bg-white border border-pink-100 rounded-2xl shadow-lg mt-2 relative z-50 overflow-hidden">
                                    <div>
-                                     <label className="text-[8px] font-black uppercase text-gray-400">Deslocar ← →</label>
+                                     <label className="text-[8px] font-black uppercase text-gray-400">Deslocar â† â†’</label>
                                      <input type="range" min="0" max="100" value={profile.avatarPosition?.x || 50} onChange={(e) => handleUpdateProfile('avatarPosition', { ...(profile.avatarPosition || {y:50}), x: Number(e.target.value) })} className="w-full accent-[var(--rosa-forte)]" />
                                    </div>
                                    <div>
-                                     <label className="text-[8px] font-black uppercase text-gray-400">Deslocar ↑ ↓</label>
+                                     <label className="text-[8px] font-black uppercase text-gray-400">Deslocar â†‘ â†“</label>
                                      <input type="range" min="0" max="100" value={profile.avatarPosition?.y || 50} onChange={(e) => handleUpdateProfile('avatarPosition', { ...(profile.avatarPosition || {x:50}), y: Number(e.target.value) })} className="w-full accent-[var(--rosa-forte)]" />
                                    </div>
                                  </motion.div>
@@ -343,7 +343,7 @@ const RendaParaMae = () => {
                     </div>
 
                     <div className="flex-1 space-y-4 w-full">
-                       <h2 className="text-3xl font-black text-[var(--texto-escuro)] font-serif italic mb-2">Dados da Empresária</h2>
+                       <h2 className="text-3xl font-black text-[var(--texto-escuro)] font-serif italic mb-2">Dados da EmpresÃ¡ria</h2>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-1">
                              <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-2">Seu Nome</label>
@@ -351,16 +351,22 @@ const RendaParaMae = () => {
                           </div>
                           <div className="space-y-1">
                              <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-2">Sua Empresa</label>
-                             <input value={profile.nomeEmpresa} onChange={e=>handleUpdateProfile('nomeEmpresa', e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-pink-300 font-bold text-sm" placeholder="Ex: Doce Atípico" />
+                             <input value={profile.nomeEmpresa} onChange={e=>handleUpdateProfile('nomeEmpresa', e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-pink-300 font-bold text-sm" placeholder="Ex: Doce AtÃ­pico" />
                           </div>
                           <div className="space-y-1">
                              <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-2">WhatsApp (Com DDD)</label>
                              <input value={profile.whatsapp} onChange={e=>handleUpdateProfile('whatsapp', e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-pink-300 font-bold text-sm" placeholder="11999999999" />
                           </div>
                           <div className="flex gap-2">
+                           {profile.whatsapp && (
+                             <label className="flex items-start gap-2 mt-2 cursor-pointer">
+                               <input type="checkbox" checked={!!profile.whatsappConsentimento} onChange={e => handleUpdateProfile('whatsappConsentimento', e.target.checked)} className="mt-0.5 accent-pink-500 w-4 h-4 shrink-0" />
+                               <span className="text-[10px] text-gray-500 font-bold leading-relaxed"><strong className="text-pink-500">Consentimento LGPD:</strong> Concordo em exibir meu WhatsApp para outras usuarias da plataforma, para fins de contato sobre vagas que eu divulgar.</span>
+                             </label>
+                           )}
                              <div className="flex-1 space-y-1">
                                 <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-2">Cidade</label>
-                                <input value={profile.cidade} onChange={e=>handleUpdateProfile('cidade', e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-pink-300 font-bold text-sm" placeholder="São Paulo" />
+                                <input value={profile.cidade} onChange={e=>handleUpdateProfile('cidade', e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-pink-300 font-bold text-sm" placeholder="SÃ£o Paulo" />
                              </div>
                              <div className="w-20 space-y-1">
                                 <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-2">UF</label>
@@ -375,7 +381,7 @@ const RendaParaMae = () => {
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 ${profile.isEmpreendedora ? 'bg-amber-500' : 'bg-gray-300'}`}><Crown size={32} /></div>
                     <div className="flex-1 text-center md:text-left">
                        <h3 className={`text-xl font-bold mb-1 ${profile.isEmpreendedora ? 'text-amber-900' : 'text-gray-500'}`}>Identidade Empreendedora</h3>
-                       <p className="text-gray-500 text-sm font-medium">Ao ativar, você poderá postar vagas reais para outras mães da comunidade.</p>
+                       <p className="text-gray-500 text-sm font-medium">Ao ativar, vocÃª poderÃ¡ postar vagas reais para outras mÃ£es da comunidade.</p>
                     </div>
                     <button onClick={toggleEmpreendedora} className={`px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${profile.isEmpreendedora ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-white text-gray-400 border border-gray-200 hover:bg-gray-100'}`}>
                        {profile.isEmpreendedora ? <span className="flex items-center gap-2"><CheckCircle size={16} /> Identidade Ativa</span> : 'Habilitar Perfil'}
@@ -389,30 +395,30 @@ const RendaParaMae = () => {
           {activeTab === 'vagas' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
                
-               {/* Form de Publicação (Apenas se for Empreendedora) */}
+               {/* Form de PublicaÃ§Ã£o (Apenas se for Empreendedora) */}
                {profile.isEmpreendedora && (
                  <div className="bg-[#4B1528] rounded-[3rem] p-8 md:p-10 shadow-2xl relative overflow-hidden border-4 border-white">
                     <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-pink-500/10 rounded-full blur-[60px]" />
-                    <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3 italic font-serif leading-tight"><Building2 size={24} className="text-pink-400" /> Convocar Mães Atípicas</h3>
+                    <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3 italic font-serif leading-tight"><Building2 size={24} className="text-pink-400" /> Convocar MÃ£es AtÃ­picas</h3>
                     <form onSubmit={handlePostVaga} className="space-y-5 relative z-10">
                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="md:col-span-1">
-                             <input required value={novaVagaForm.funcao} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, funcao: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-bold placeholder:text-white/40 shadow-inner" placeholder="Função..." />
+                             <input required value={novaVagaForm.funcao} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, funcao: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-bold placeholder:text-white/40 shadow-inner" placeholder="FunÃ§Ã£o..." />
                           </div>
                           <div className="md:col-span-1">
-                             <input value={novaVagaForm.salario} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, salario: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-bold placeholder:text-white/30" placeholder="R$ Salário" />
+                             <input value={novaVagaForm.salario} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, salario: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-bold placeholder:text-white/30" placeholder="R$ SalÃ¡rio" />
                           </div>
                           <div className="md:col-span-1">
                              <select value={novaVagaForm.tipo} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, tipo: e.target.value}))} className="w-full p-4 bg-white text-[#4B1528] rounded-2xl font-black text-xs outline-none cursor-pointer hover:bg-pink-50 transition-all shadow-md">
                                 <option>Home Office</option>
                                 <option>Presencial</option>
-                                <option>Híbrido</option>
+                                <option>HÃ­brido</option>
                              </select>
                           </div>
                        </div>
-                       <textarea required rows={3} value={novaVagaForm.descricao} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, descricao: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-medium placeholder:text-white/30 resize-none shadow-inner" placeholder="Conte mais sobre a vaga, flexibilidade e horários..."></textarea>
+                       <textarea required rows={3} value={novaVagaForm.descricao} onChange={e=>setNovaVagaForm((pv: any)=>({...pv, descricao: e.target.value}))} className="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white outline-none focus:bg-white/20 font-medium placeholder:text-white/30 resize-none shadow-inner" placeholder="Conte mais sobre a vaga, flexibilidade e horÃ¡rios..."></textarea>
                        <button type="submit" className="w-full py-5 bg-[var(--rosa-forte)] text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-3 uppercase tracking-[4px] text-xs hover:scale-[1.01] active:scale-95 transition-all">
-                          <Send size={18} /> LANÇAR OPORTUNIDADE
+                          <Send size={18} /> LANÃ‡AR OPORTUNIDADE
                        </button>
                     </form>
                  </div>
@@ -423,7 +429,7 @@ const RendaParaMae = () => {
                   <div className="flex justify-between items-center mb-10">
                     <h2 className="text-3xl font-black text-[var(--texto-escuro)] font-serif italic">Mural de <span className="text-[var(--rosa-forte)]">Chances</span></h2>
                     <div className="flex items-center gap-2 text-xs font-black uppercase text-pink-500 tracking-widest bg-pink-50 px-4 py-2 rounded-full border border-pink-100">
-                       <UserCheck size={14} /> Somente Mães
+                       <UserCheck size={14} /> Somente MÃ£es
                     </div>
                   </div>
 
@@ -432,7 +438,7 @@ const RendaParaMae = () => {
                        {vagas.map(v => (
                          <motion.div key={v.id} whileHover={{ y: -5 }} className="bg-white p-6 rounded-[2.5rem] border border-pink-50 shadow-md hover:shadow-2xl transition-all relative overflow-hidden group">
                            
-                           {/* Badge Tipo/Salário */}
+                           {/* Badge Tipo/SalÃ¡rio */}
                            <div className="flex gap-2 flex-wrap mb-4">
                               <span className="px-3 py-1 bg-pink-100 text-[var(--rosa-forte)] rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><Laptop size={12} /> {v.tipo}</span>
                               {v.salario && <span className="px-3 py-1 bg-green-100 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><DollarSign size={12} /> {v.salario}</span>}
@@ -469,7 +475,7 @@ const RendaParaMae = () => {
                                 </button>
                               ) : (
                                 <a 
-                                  href={`https://wa.me/55${v.autor.whatsapp?.replace(/\D/g,'')}?text=Olá ${v.autor.nome?.split(' ')[0]}, vi sua vaga de ${v.funcao} no Almas Atípicas e gostaria de participar!`} 
+                                  href={`https://wa.me/55${v.autor.whatsapp?.replace(/\D/g,'')}?text=OlÃ¡ ${v.autor.nome?.split(' ')[0]}, vi sua vaga de ${v.funcao} no Almas AtÃ­picas e gostaria de participar!`} 
                                   target="_blank" 
                                   className="w-full py-4 bg-[#25D366] text-white rounded-xl font-black text-xs uppercase tracking-widest text-center shadow-lg hover:shadow-green-200 transition-all flex items-center justify-center gap-2"
                                 >
@@ -483,7 +489,7 @@ const RendaParaMae = () => {
                   ) : (
                     <div className="p-20 text-center border-4 border-dashed border-gray-100 rounded-[3rem]">
                        <Briefcase size={80} className="text-gray-100 mx-auto mb-6" />
-                       <h4 className="text-xl font-bold text-gray-400 italic">Nenhuma vaga lançada no feed hoje.</h4>
+                       <h4 className="text-xl font-bold text-gray-400 italic">Nenhuma vaga lanÃ§ada no feed hoje.</h4>
                     </div>
                   )}
                </div>
@@ -495,7 +501,7 @@ const RendaParaMae = () => {
                   </div>
                   <div className="flex-1 text-center md:text-left space-y-4">
                     <h3 className="text-2xl font-black text-[var(--texto-escuro)] font-serif italic mb-2 leading-tight">Empreendedorismo e MEI</h3>
-                    <p className="text-[var(--texto-medio)] text-sm font-medium leading-relaxed">Regularize seu negócio para emitir notas fiscais, garantir auxílio maternidade e aposentadoria. Sua jornada como empresária começa com profissionalismo.</p>
+                    <p className="text-[var(--texto-medio)] text-sm font-medium leading-relaxed">Regularize seu negÃ³cio para emitir notas fiscais, garantir auxÃ­lio maternidade e aposentadoria. Sua jornada como empresÃ¡ria comeÃ§a com profissionalismo.</p>
                     <a href="https://www.gov.br/empresas-e-negocios/pt-br/empreendedor" target="_blank" className="inline-flex items-center gap-2 px-8 py-3 bg-[var(--texto-escuro)] text-white font-black rounded-xl text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg">Abrir MEI Agora <ExternalLink size={14} /></a>
                   </div>
                </div>
@@ -520,8 +526,8 @@ const RendaParaMae = () => {
 
            <div className="bg-gradient-to-br from-[var(--rosa-forte)] to-[#4B1528] rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
               <Sparkles className="absolute -top-10 -left-10 w-40 h-40 opacity-10 group-hover:scale-150 transition-transform duration-1000" />
-              <h4 className="text-2xl font-black font-serif italic mb-2 italic">Apoio MEI 💼</h4>
-              <p className="text-pink-100 text-sm font-medium mb-6">Mãe, sabia que como MEI você tem direito ao Auxílio-Maternidade?</p>
+              <h4 className="text-2xl font-black font-serif italic mb-2 italic">Apoio MEI ðŸ’¼</h4>
+              <p className="text-pink-100 text-sm font-medium mb-6">MÃ£e, sabia que como MEI vocÃª tem direito ao AuxÃ­lio-Maternidade?</p>
               <button className="w-full py-4 bg-white text-[#4B1528] font-black rounded-2xl text-[10px] uppercase tracking-[3px] shadow-xl hover:scale-105 transition-all">Saber Mais</button>
            </div>
         </div>

@@ -311,6 +311,15 @@ const RedeDeMaes = () => {
                   <button className="flex items-center gap-2 text-[var(--texto-claro)] font-bold hover:text-[var(--texto-medio)] transition-all ml-auto">
                     <Share2 size={20} />
                   </button>
+                  {post.autorId !== 'local' && (
+                    <button
+                      onClick={() => toast.warning('Denúncia registrada. Nossa equipe irá analisar este conteúdo em até 48h. Obrigada por manter a rede segura! 🌸')}
+                      title="Denunciar conteúdo inadequado"
+                      className="flex items-center gap-1 text-[9px] font-black uppercase text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg px-2 py-1 transition-all tracking-widest"
+                    >
+                      ⚑ Denunciar
+                    </button>
+                  )}
                 </div>
 
                 {/* Secção de Comentários */}

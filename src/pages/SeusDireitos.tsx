@@ -201,9 +201,12 @@ const SeusDireitos = () => {
           {/* CALCULADORA DE DIREITOS */}
           <CalculadoraDireitos />
           <div className="bg-white/65 shadow-xl backdrop-blur-[8px] rounded-3xl border border-white/40 p-6">
-            <h3 className="flex items-center gap-2 text-xl font-bold text-[var(--texto-escuro)] mb-6 font-serif">
-              <Newspaper className="text-[var(--rosa-forte)]" /> Notícias & Atualizações
+            <h3 className="flex items-center gap-2 text-xl font-bold text-[var(--texto-escuro)] mb-3 font-serif">
+              <Newspaper className="text-[var(--rosa-forte)]" /> Notícias &amp; Atualizações
             </h3>
+            <p className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4 leading-relaxed">
+              ⚠️ Os títulos abaixo são <strong>exemplos ilustrativos</strong> de temas jurídicos relevantes. Não representam publicações verificadas em tempo real. Consulte sempre fontes oficiais (gov.br, OAB).
+            </p>
             <div className="space-y-4">
               {NOTICIAS_MOCK.map((news) => (
                 <div key={news.id} className="p-4 bg-white/20 hover:bg-white/40 rounded-xl border border-white/30 transition-colors cursor-pointer group">
