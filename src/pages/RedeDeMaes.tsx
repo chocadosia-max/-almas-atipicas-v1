@@ -313,7 +313,23 @@ const RedeDeMaes = () => {
                   </button>
                   {post.autorId !== 'local' && (
                     <button
-                      onClick={() => toast.warning('Denúncia registrada. Nossa equipe irá analisar este conteúdo em até 48h. Obrigada por manter a rede segura! 🌸')}
+                      onClick={() => {
+                        try {
+                          const saved = JSON.parse(localStorage.getItem('almas_admin_denuncias') || '[]');
+                          const jaReportou = saved.some((d: any) => d.postId === post.id && d.status === 'pendente');
+                          if (jaReportou) { toast.info('Você já denunciou este post. Aguarde a análise da equipe.'); return; }
+                          const denuncia = {
+                            id: Date.now(),
+                            postId: post.id,
+                            content: post.conteudo?.slice(0, 120) + (post.conteudo?.length > 120 ? '...' : ''),
+                            autorNome: post.autorNome,
+                            timestamp: Date.now(),
+                            status: 'pendente',
+                          };
+                          localStorage.setItem('almas_admin_denuncias', JSON.stringify([denuncia, ...saved]));
+                        } catch {}
+                        toast.warning('Denúncia registrada! Nossa equipe irá analisar em até 48h. Obrigada por manter a rede segura 🌸');
+                      }}
                       title="Denunciar conteúdo inadequado"
                       className="flex items-center gap-1 text-[9px] font-black uppercase text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg px-2 py-1 transition-all tracking-widest"
                     >

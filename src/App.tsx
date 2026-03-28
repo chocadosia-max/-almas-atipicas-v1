@@ -85,6 +85,55 @@ const LegalFooter = () => (
   </div>
 );
 
+const GlobalBanner = () => {
+  const [broadcast, setBroadcast] = React.useState<{ message: string; type: string; active: boolean } | null>(null);
+  const [maintenance, setMaintenance] = React.useState(false);
+  const [dismissed, setDismissed] = React.useState(false);
+
+  const readState = React.useCallback(() => {
+    try {
+      const b = localStorage.getItem('almas_admin_broadcast');
+      setBroadcast(b ? JSON.parse(b) : null);
+      const m = localStorage.getItem('almas_maintenance');
+      setMaintenance(m ? JSON.parse(m) : false);
+    } catch {}
+  }, []);
+
+  React.useEffect(() => {
+    readState();
+    window.addEventListener('storage', readState);
+    const id = setInterval(readState, 10_000);
+    return () => { window.removeEventListener('storage', readState); clearInterval(id); };
+  }, [readState]);
+
+  const showMaintenance = maintenance;
+  const showBroadcast = !dismissed && broadcast?.active && broadcast?.message;
+
+  if (!showMaintenance && !showBroadcast) return null;
+
+  const bgMap: Record<string, string> = {
+    info: 'bg-blue-500',
+    warning: 'bg-amber-500',
+    success: 'bg-green-500',
+  };
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[9999] flex flex-col">
+      {showMaintenance && (
+        <div className="w-full bg-amber-500 text-white text-xs font-black text-center py-2 px-4 flex items-center justify-center gap-2">
+          🔧 Sistema em manutenção — algumas funcionalidades podem estar indisponíveis. Voltamos em breve!
+        </div>
+      )}
+      {showBroadcast && broadcast && (
+        <div className={`w-full ${bgMap[broadcast.type] || 'bg-blue-500'} text-white text-xs font-bold text-center py-2 px-10 flex items-center justify-center gap-2 relative`}>
+          <span>{broadcast.message}</span>
+          <button onClick={() => setDismissed(true)} className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity text-base leading-none">×</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AppLayout = () => {
   const location = useLocation();
   const hideFooterRoutes = ['/pausa', '/crise', '/cartao-tea'];
@@ -92,6 +141,7 @@ const AppLayout = () => {
 
   return (
     <ProtectedRoute>
+      <GlobalBanner />
       <Sidebar />
       <div className="lg:pl-[240px] pt-16 lg:pt-0 w-full min-h-screen">
         <main className="w-full flex flex-col min-h-screen">
