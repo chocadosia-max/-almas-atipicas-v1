@@ -428,6 +428,14 @@ const RedeDeMaes = () => {
             </div>
           </div>
 
+          {/* ─── AVISO LGPD / ECA ─── */}
+          <div className="flex items-start gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4 text-amber-800">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5 text-amber-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <p className="text-xs font-bold leading-relaxed">
+              <strong>Aviso de Privacidade (LGPD · ECA):</strong> Informações de saúde como nível de suporte TEA e faixa etária dos filhos são dados sensíveis de menores de idade. Esses dados foram compartilhados voluntariamente pelas mães durante o cadastro. Passe o mouse sobre os badges para visualizá-los. Não reproduza, copie ou compartilhe esses dados fora da plataforma.
+            </p>
+          </div>
+
           {/* Grid de Mães */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
@@ -459,13 +467,21 @@ const RedeDeMaes = () => {
                   
                   <div className="flex gap-2 mb-6 justify-center flex-wrap">
                     {perfil.nivel_suporte_filho && (
-                      <span className="bg-[var(--rosa-forte)]/10 text-[var(--rosa-forte)] text-xs font-black px-3 py-1.5 rounded-full">
-                        {perfil.nivel_suporte_filho}
+                      <span 
+                        title="Dado de saúde sensível — compartilhado pela mãe. Passe o mouse para ver."
+                        className="relative bg-[var(--rosa-forte)]/10 text-[var(--rosa-forte)] text-xs font-black px-3 py-1.5 rounded-full cursor-help group/badge"
+                      >
+                        <span className="blur-sm group-hover/badge:blur-none transition-all duration-300 select-none">{perfil.nivel_suporte_filho}</span>
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] bg-gray-800 text-white px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none font-normal">Dado sensível (LGPD)</span>
                       </span>
                     )}
                     {perfil.idade_filho && (
-                      <span className="bg-[var(--texto-escuro)]/10 text-[var(--texto-escuro)] text-xs font-black px-3 py-1.5 rounded-full">
-                        {perfil.idade_filho} anos
+                      <span 
+                        title="Dado de saúde sensível — compartilhado pela mãe. Passe o mouse para ver."
+                        className="relative bg-[var(--texto-escuro)]/10 text-[var(--texto-escuro)] text-xs font-black px-3 py-1.5 rounded-full cursor-help group/age"
+                      >
+                        <span className="blur-sm group-hover/age:blur-none transition-all duration-300 select-none">{perfil.idade_filho} anos</span>
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] bg-gray-800 text-white px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/age:opacity-100 transition-opacity pointer-events-none font-normal">Dado sensível (LGPD)</span>
                       </span>
                     )}
                   </div>

@@ -73,7 +73,7 @@ const TermosDeUso = () => {
               Em conformidade com a <strong>Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018)</strong>, afirmamos nosso compromisso com a proteção dos dados sensíveis da sua família:
             </p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Os seus registros no Diário da Jornada e no Rastreador do Momento Pausa são <strong>estritamente criptografados</strong> e salvos no seu aparelho/conta pessoal.</li>
+              <li>Os seus registros no Diário da Jornada e no Rastreador do Momento Pausa são salvos de forma <strong>local e privada no seu dispositivo pessoal</strong>, sem transmissão para servidores externos de terceiros ou algoritmos de publicidade.</li>
               <li>A plataforma não comercializará, sob nenhuma hipótese, os dados sobre as condições de saúde ou diagnósticos do seu filho para agências de publicidade ou farmacêuticas.</li>
               <li>Você tem o direito incondicional de solicitar o <strong>apagamento total</strong> de todos os seus dados e histórico da nossa base a qualquer momento (Direito ao Esquecimento).</li>
             </ul>
