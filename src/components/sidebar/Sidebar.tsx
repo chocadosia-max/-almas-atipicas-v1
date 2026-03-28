@@ -277,7 +277,34 @@ const SidebarContent = () => {
                       const file = e.target.files?.[0];
                       if (file) {
                          const reader = new FileReader();
-                         reader.onloadend = () => setEditProfile({ ...editProfile, avatarBase64: reader.result as string });
+                         reader.onload = (eReader) => {
+                            const img = new Image();
+                            img.onload = () => {
+                               const canvas = document.createElement('canvas');
+                               // Compression logic
+                               let width = img.width;
+                               let height = img.height;
+                               const maxDimension = 400;
+                               if (width > height && width > maxDimension) {
+                                   height *= maxDimension / width;
+                                   width = maxDimension;
+                               } else if (height > maxDimension) {
+                                   width *= maxDimension / height;
+                                   height = maxDimension;
+                               }
+                               canvas.width = width;
+                               canvas.height = height;
+                               const ctx = canvas.getContext('2d');
+                               if(ctx) {
+                                   ctx.drawImage(img, 0, 0, width, height);
+                                   const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                                   setEditProfile({ ...editProfile, avatarBase64: compressedBase64 });
+                               }
+                            };
+                            if (eReader.target?.result) {
+                               img.src = eReader.target.result as string;
+                            }
+                         };
                          reader.readAsDataURL(file);
                       }
                    }} />
@@ -310,10 +337,15 @@ const SidebarContent = () => {
 
             <button 
               onClick={() => {
-                 localStorage.setItem('almas_empreendedora_profile', JSON.stringify(editProfile));
-                 window.dispatchEvent(new Event('profileUpdated'));
-                 setIsProfileModalOpen(false);
-                 toast.success('Perfil atualizado com sucesso!');
+                 try {
+                     localStorage.setItem('almas_empreendedora_profile', JSON.stringify(editProfile));
+                     window.dispatchEvent(new Event('profileUpdated'));
+                     setIsProfileModalOpen(false);
+                     toast.success('Perfil atualizado com sucesso!');
+                 } catch (error) {
+                     console.error("Erro ao salvar perfil:", error);
+                     toast.error('Erro ao salvar. A foto pode ser muito grande, tente uma menor.');
+                 }
               }}
               aria-label="Salvar alterações do perfil"
               className="w-full mt-6 py-4 bg-gradient-to-r from-pink-500 to-rose-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-lg shadow-pink-500/30 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-500"
